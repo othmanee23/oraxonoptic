@@ -1,0 +1,126 @@
+export interface Subscription {
+  id: string;
+  userId: string;
+  startDate: string;
+  expiryDate: string;
+  status: 'active' | 'expired' | 'pending';
+}
+
+export interface PaymentRequest {
+  id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  amount: number;
+  monthsRequested: number;
+  planKey?: string;
+  storesCount?: number; // Number of stores included in this payment
+  screenshot: string; // Base64 encoded image
+  submittedAt: string;
+  status: 'pending' | 'approved' | 'rejected';
+  processedAt?: string;
+  processedBy?: string;
+  rejectionReason?: string;
+}
+
+export interface SubscriptionPlan {
+  months: number;
+  price: number;
+  label: string;
+}
+
+export interface SubscriptionOffer {
+  key: string;
+  label: string;
+  storeLimit?: number | null;
+  monthlyPrice?: number | null;
+  isCustom: boolean;
+  typeLabel: string;
+  currency: string;
+  sortOrder: number;
+}
+
+export const defaultSubscriptionOffers: SubscriptionOffer[] = [
+  {
+    key: 'one_store',
+    label: '1 magasin',
+    storeLimit: 1,
+    monthlyPrice: 500,
+    isCustom: false,
+    typeLabel: 'Standard',
+    currency: 'DH',
+    sortOrder: 1,
+  },
+  {
+    key: 'two_stores',
+    label: '2 magasins',
+    storeLimit: 2,
+    monthlyPrice: 900,
+    isCustom: false,
+    typeLabel: 'Standard',
+    currency: 'DH',
+    sortOrder: 2,
+  },
+  {
+    key: 'custom',
+    label: 'Sur devis',
+    storeLimit: null,
+    monthlyPrice: null,
+    isCustom: true,
+    typeLabel: 'Sur devis',
+    currency: 'DH',
+    sortOrder: 3,
+  },
+];
+
+// Pricing configuration
+export interface PricingConfig {
+  monthlyPrice: number; // Price per month for base subscription
+  pricePerStore: number; // Additional price per store per month
+  currency: string;
+}
+
+export const defaultPricingConfig: PricingConfig = {
+  monthlyPrice: 500, // 500 DH/month base
+  pricePerStore: 200, // 200 DH/store/month
+  currency: 'DH',
+};
+
+// Calculate subscription plans dynamically based on pricing config
+export const getSubscriptionPlans = (storeCount: number = 1): SubscriptionPlan[] => {
+  const monthlyTotal = defaultPricingConfig.monthlyPrice + (defaultPricingConfig.pricePerStore * storeCount);
+  
+  return [
+    { months: 1, price: monthlyTotal, label: '1 mois' },
+    { months: 3, price: Math.round(monthlyTotal * 3 * 0.9), label: '3 mois (-10%)' },
+    { months: 6, price: Math.round(monthlyTotal * 6 * 0.85), label: '6 mois (-15%)' },
+    { months: 12, price: Math.round(monthlyTotal * 12 * 0.8), label: '12 mois (-20%)' },
+  ];
+};
+
+// Legacy plans (fallback)
+export const subscriptionPlans: SubscriptionPlan[] = [
+  { months: 1, price: 500, label: '1 mois' },
+  { months: 3, price: 1350, label: '3 mois (-10%)' },
+  { months: 6, price: 2550, label: '6 mois (-15%)' },
+  { months: 12, price: 4800, label: '12 mois (-20%)' },
+];
+
+export interface BankInfo {
+  bankName: string;
+  accountName: string;
+  iban: string;
+  swift: string;
+  rib?: string;
+}
+
+export const defaultBankInfo: BankInfo = {
+  bankName: 'Banque Nationale',
+  accountName: 'OpticAxon OPTIC SARL',
+  iban: 'MA00 0000 0000 0000 0000 0000 000',
+  swift: 'BNMAMAMC',
+  rib: '',
+};
+
+// Legacy constant for backwards compatibility
+export const BANK_INFO = defaultBankInfo;

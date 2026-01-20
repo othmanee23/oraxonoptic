@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* OpticAxon - Design System for Moroccan Opticians SaaS */
+
+@layer base {
+  :root {
+    /* Core brand colors - Professional Teal/Medical */
+    --background: 210 20% 98%;
+    --foreground: 220 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+
+    /* Primary - Professional Teal */
+    --primary: 187 65% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Soft warm gray */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 25% 20%;
+
+    /* Muted - Subtle backgrounds */
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Accent - Warm gold for highlights */
+    --accent: 38 92% 50%;
+    --accent-foreground: 220 25% 10%;
+
+    /* Destructive - Clear red for errors */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success - Medical green */
+    --success: 152 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning - Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 25% 10%;
+
+    /* Info - Light blue */
+    --info: 200 80% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 187 65% 35%;
+
+    --radius: 0.625rem;
+
+    /* Sidebar - Clean professional */
+    --sidebar-background: 220 25% 12%;
+    --sidebar-foreground: 220 14% 85%;
+    --sidebar-primary: 187 65% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 18%;
+    --sidebar-accent-foreground: 220 14% 95%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 187 65% 50%;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 25% 10% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(220 25% 10% / 0.08), 0 2px 4px -2px hsl(220 25% 10% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(220 25% 10% / 0.08), 0 4px 6px -4px hsl(220 25% 10% / 0.05);
+    --shadow-card: 0 1px 3px 0 hsl(220 25% 10% / 0.04), 0 1px 2px -1px hsl(220 25% 10% / 0.04);
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 220 14% 95%;
+
+    --card: 220 25% 10%;
+    --card-foreground: 220 14% 95%;
+
+    --popover: 220 25% 10%;
+    --popover-foreground: 220 14% 95%;
+
+    --primary: 187 65% 50%;
+    --primary-foreground: 220 25% 10%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 14% 95%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 220 25% 10%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 187 65% 50%;
+
+    --sidebar-background: 220 25% 6%;
+    --sidebar-foreground: 220 14% 85%;
+    --sidebar-primary: 187 65% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 12%;
+    --sidebar-accent-foreground: 220 14% 95%;
+    --sidebar-border: 220 20% 15%;
+    --sidebar-ring: 187 65% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Better focus states */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer utilities {
+  /* Glass effect for cards */
+  .glass {
+    @apply bg-card/80 backdrop-blur-md;
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent;
+  }
+
+  /* Stat card hover effect */
+  .stat-card {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
+
+  /* Module card hover */
+  .module-card {
+    @apply transition-all duration-200 hover:border-primary/30 hover:shadow-md;
+  }
+}
