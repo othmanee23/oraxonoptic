@@ -194,20 +194,6 @@ class AdminOpticienController extends Controller
         $user->is_active = true;
         $user->save();
 
-        $hasSubscription = \App\Models\Subscription::query()
-            ->where('user_id', $user->id)
-            ->exists();
-
-        if (! $hasSubscription) {
-            $now = now();
-            \App\Models\Subscription::create([
-                'user_id' => $user->id,
-                'start_date' => $now,
-                'expiry_date' => $now->copy()->addDays(14),
-                'status' => 'active',
-            ]);
-        }
-
         return response()->json($user);
     }
 
