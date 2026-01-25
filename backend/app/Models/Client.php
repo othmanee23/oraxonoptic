@@ -50,6 +50,6 @@ class Client extends Model
 
     public function latestInvoice(): HasOne
     {
-        return $this->hasOne(Invoice::class)->latestOfMany();
+        return $this->hasOne(Invoice::class)->ofMany('id', 'max');
     }
 }
