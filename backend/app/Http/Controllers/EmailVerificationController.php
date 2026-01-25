@@ -10,7 +10,7 @@ class EmailVerificationController extends Controller
     public function verify(Request $request, int $id, string $hash)
     {
         $user = User::findOrFail($id);
-        $frontendUrl = trim(explode(',', env('FRONTEND_URL', 'http://localhost:8080'))[0]);
+        $frontendUrl = trim(explode(',', config('app.frontend_url', 'http://localhost:8080'))[0]);
 
         if (! hash_equals(sha1($user->email), $hash)) {
             return redirect()->to(rtrim($frontendUrl, '/').'/auth?verified=0');

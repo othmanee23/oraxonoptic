@@ -52,6 +52,12 @@ export default function Clients() {
   const { toast } = useToast();
   const { canCreate, canEdit, canDelete } = usePermission();
 
+  const resolvePurchaseStatus = (amountPaid: number, amountDue: number) => {
+    if (amountDue <= 0) return "paid";
+    if (amountPaid > 0) return "partial";
+    return "pending";
+  };
+
   useEffect(() => {
     const loadClients = async () => {
       try {
@@ -64,6 +70,18 @@ export default function Clients() {
           address?: string | null;
           date_of_birth?: string | null;
           notes?: string | null;
+          invoices_count?: number;
+          invoices_sum_total?: string | number | null;
+          latest_invoice?: {
+            id: number | string;
+            total: string | number;
+            amount_paid: string | number;
+            amount_due: string | number;
+            status?: string | null;
+            created_at: string;
+            paid_at?: string | null;
+            validated_at?: string | null;
+          } | null;
           created_at: string;
           updated_at: string;
         }[]>("/api/clients");
@@ -78,6 +96,20 @@ export default function Clients() {
           notes: client.notes ?? undefined,
           createdAt: client.created_at,
           updatedAt: client.updated_at,
+          purchasesCount: client.invoices_count ?? 0,
+          totalSpent: Number(client.invoices_sum_total ?? 0),
+          latestInvoice: client.latest_invoice
+            ? {
+                id: String(client.latest_invoice.id),
+                total: Number(client.latest_invoice.total),
+                amountPaid: Number(client.latest_invoice.amount_paid),
+                amountDue: Number(client.latest_invoice.amount_due),
+                status: client.latest_invoice.status ?? undefined,
+                createdAt: client.latest_invoice.created_at,
+                paidAt: client.latest_invoice.paid_at ?? undefined,
+                validatedAt: client.latest_invoice.validated_at ?? undefined,
+              }
+            : undefined,
         }));
         setClients(mapped);
       } catch (error) {
@@ -886,10 +918,17 @@ export default function Clients() {
                 ) : (
                   filteredClients.map((client) => {
                     const clientPurchases = getClientPurchases(client.id);
-                    const totalSpent = getClientTotalSpent(client.id);
-                    const lastPurchase = clientPurchases.sort(
-                      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-                    )[0];
+                    const totalSpent = client.totalSpent ?? getClientTotalSpent(client.id);
+                    const purchasesCount = client.purchasesCount ?? clientPurchases.length;
+                    const lastInvoice = client.latestInvoice;
+                    const lastPurchase = lastInvoice
+                      ? {
+                          date: lastInvoice.paidAt || lastInvoice.validatedAt || lastInvoice.createdAt,
+                          status: resolvePurchaseStatus(lastInvoice.amountPaid, lastInvoice.amountDue),
+                        }
+                      : clientPurchases.sort(
+                          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+                        )[0];
 
                     return (
                       <TableRow key={client.id}>
@@ -926,7 +965,7 @@ export default function Clients() {
                         <TableCell className="text-right">
                           <span className="font-medium">{totalSpent.toLocaleString("fr-FR")} MAD</span>
                           <p className="text-sm text-muted-foreground">
-                            {clientPurchases.length} achat{clientPurchases.length > 1 ? "s" : ""}
+                            {purchasesCount} achat{purchasesCount > 1 ? "s" : ""}
                           </p>
                         </TableCell>
                         <TableCell>

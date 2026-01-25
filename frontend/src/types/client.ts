@@ -11,6 +11,18 @@ export interface Client {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  purchasesCount?: number;
+  totalSpent?: number;
+  latestInvoice?: {
+    id: string;
+    total: number;
+    amountPaid: number;
+    amountDue: number;
+    status?: string;
+    createdAt: string;
+    paidAt?: string;
+    validatedAt?: string;
+  };
 }
 
 // Store helpers were removed with local storage cleanup.

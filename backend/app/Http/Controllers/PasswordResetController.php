@@ -23,7 +23,7 @@ class PasswordResetController extends Controller
         }
 
         $token = Password::broker()->createToken($user);
-        $frontendUrl = trim(explode(',', env('FRONTEND_URL', 'http://localhost:8080'))[0]);
+        $frontendUrl = trim(explode(',', config('app.frontend_url', 'http://localhost:8080'))[0]);
         $resetLink = rtrim($frontendUrl, '/').'/auth?token='.urlencode($token).'&email='.urlencode($user->email);
 
         Mail::to($user->email)->send(new PasswordResetMail($user, $resetLink));

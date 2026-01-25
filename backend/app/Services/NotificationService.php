@@ -56,7 +56,7 @@ class NotificationService
         if ($channels['email']) {
             $recipient = $settings?->email ?: $store->email;
             if ($recipient) {
-                $frontendUrl = trim(explode(',', env('FRONTEND_URL', 'http://localhost:8080'))[0]);
+                $frontendUrl = trim(explode(',', config('app.frontend_url', 'http://localhost:8080'))[0]);
                 $link = $payload['link'] ?? null;
                 $fullLink = $link ? rtrim($frontendUrl, '/').$link : null;
                 Mail::to($recipient)->send(new StoreNotificationMail(
