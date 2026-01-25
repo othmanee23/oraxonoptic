@@ -7,7 +7,7 @@
   <body>
     <p>Bonjour,</p>
     <p>{{ $title }}</p>
-    <p>{{ $message }}</p>
+    <p>{{ $body }}</p>
     @if (!empty($link))
       <p><a href="{{ $link }}">Voir dans OpticAxon</a></p>
     @endif

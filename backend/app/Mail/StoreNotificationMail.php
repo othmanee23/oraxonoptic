@@ -13,14 +13,14 @@ class StoreNotificationMail extends Mailable
 
     public Store $store;
     public string $title;
-    public string $message;
+    public string $body;
     public ?string $link;
 
-    public function __construct(Store $store, string $title, string $message, ?string $link = null)
+    public function __construct(Store $store, string $title, string $body, ?string $link = null)
     {
         $this->store = $store;
         $this->title = $title;
-        $this->message = $message;
+        $this->body = $body;
         $this->link = $link;
     }
 
