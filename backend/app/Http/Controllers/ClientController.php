@@ -41,7 +41,19 @@ class ClientController extends Controller
         $clients = Client::query()
             ->where('owner_id', $ownerId)
             ->with([
-                'latestInvoice:id,client_id,total,amount_paid,amount_due,status,created_at,paid_at,validated_at',
+                'latestInvoice' => function ($query) {
+                    $query->select(
+                        'invoices.id',
+                        'invoices.client_id',
+                        'invoices.total',
+                        'invoices.amount_paid',
+                        'invoices.amount_due',
+                        'invoices.status',
+                        'invoices.created_at',
+                        'invoices.paid_at',
+                        'invoices.validated_at'
+                    );
+                },
             ])
             ->withCount('invoices')
             ->withSum('invoices', 'total')
