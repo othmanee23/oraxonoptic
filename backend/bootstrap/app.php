@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        $middleware->redirectGuestsTo(fn () => null);
         $middleware->alias([
             'store.context' => \App\Http\Middleware\StoreContext::class,
         ]);
