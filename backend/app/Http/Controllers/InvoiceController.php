@@ -68,7 +68,7 @@ class InvoiceController extends Controller
         $ownerId = $this->resolveOwnerId($user);
 
         $validated = $request->validate([
-            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
+            'client_id' => ['required', 'integer', 'exists:clients,id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['nullable', 'integer', 'exists:products,id'],
             'items.*.product_name' => ['required', 'string', 'max:255'],

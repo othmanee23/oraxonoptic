@@ -484,9 +484,13 @@ const Ventes = () => {
       toast.error("Veuillez sélectionner un magasin.");
       return;
     }
+    if (!selectedClient?.id) {
+      toast.error("Veuillez sélectionner un client.");
+      return;
+    }
 
     const payload = {
-      client_id: selectedClient?.id ? Number(selectedClient.id) : null,
+      client_id: Number(selectedClient.id),
       items: cartItems.map((item) => {
         const product = products.find((p) => p.id === item.productId);
         return {
@@ -644,13 +648,17 @@ const Ventes = () => {
       toast.error("Veuillez sélectionner un magasin.");
       return;
     }
+    if (!selectedClient?.id) {
+      toast.error("Veuillez sélectionner un client.");
+      return;
+    }
 
     const draft = currentInvoice ?? createInvoice();
 
     apiFetch<any>("/api/invoices", {
       method: "POST",
       body: JSON.stringify({
-        client_id: draft.clientId ? Number(draft.clientId) : null,
+        client_id: Number(selectedClient.id),
         items: draft.items.map((item) => {
           const product = products.find((p) => p.id === item.productId);
           return {
