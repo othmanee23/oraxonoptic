@@ -474,27 +474,29 @@ export default function Abonnement() {
 
           {/* My Subscription Tab */}
           <TabsContent value="subscription" className="space-y-6">
-            {/* Pricing Info */}
+            {/* Subscription Status Banner */}
             <Card className="bg-primary/5 border-primary/20">
               <CardContent className="py-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Votre tarif mensuel</p>
+                    <p className="text-sm text-muted-foreground">État de l'abonnement</p>
                     <p className="text-2xl font-bold text-primary">
-                      {pricingConfig.monthlyPrice.toLocaleString()} {pricingConfig.currency}/mois
+                      {subscriptionStatus.label}
                     </p>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Inclut 1 magasin
-                      {extraStoreCount > 0 && (
-                        <> + {extraStoreCount} magasin(s) x {pricingConfig.pricePerStore.toLocaleString()} {pricingConfig.currency}/mois</>
-                      )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {subscription
+                        ? `Expire le ${format(new Date(subscription.expiryDate), 'dd MMMM yyyy', { locale: fr })}`
+                        : "Aucun abonnement actif"}
+                    </p>
+                  </div>
+                  {subscription && (
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Jours restants</p>
+                      <p className="text-2xl font-bold text-primary">
+                        {daysRemaining}
+                      </p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">
-                      {requestedStoreCount} magasin(s) demandés
-                    </p>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
