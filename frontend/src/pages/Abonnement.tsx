@@ -70,6 +70,7 @@ export default function Abonnement() {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [allPaymentRequests, setAllPaymentRequests] = useState<PaymentRequest[]>([]);
   const [activeStoreCount, setActiveStoreCount] = useState(1);
+  const [requestedStoreCount, setRequestedStoreCount] = useState(1);
   const [pricingConfig, setPricingConfig] = useState<PricingConfig>(defaultPricingConfig);
   const [bankInfo, setBankInfo] = useState<BankInfo>({
     bankName: '',
@@ -215,9 +216,11 @@ export default function Abonnement() {
         }));
         const activeCount = Math.max(1, mappedStores.filter((store) => store.isActive).length);
         setActiveStoreCount(activeCount);
+        setRequestedStoreCount(activeCount);
       })
       .catch(() => {
         setActiveStoreCount(1);
+        setRequestedStoreCount(1);
       });
   };
 
@@ -326,7 +329,7 @@ export default function Abonnement() {
   const selectedDurationValue = durationOptions.find(
     (option) => option.months.toString() === selectedDuration
   );
-  const extraStoreCount = Math.max(0, activeStoreCount - 1);
+  const extraStoreCount = Math.max(0, requestedStoreCount - 1);
   const baseDurationPrice = selectedDurationValue?.months === 12
     ? (pricingConfig.annualPrice ?? defaultPricingConfig.annualPrice)
     : selectedDurationValue?.months === 6
@@ -355,7 +358,7 @@ export default function Abonnement() {
         body: JSON.stringify({
           months_requested: selectedDurationValue.months,
           amount: selectedAmount,
-          stores_count: activeStoreCount,
+          stores_count: requestedStoreCount,
           screenshot,
         }),
       });
@@ -491,7 +494,7 @@ export default function Abonnement() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">
-                      {activeStoreCount} magasin(s) actif(s)
+                      {requestedStoreCount} magasin(s) demandés
                     </p>
                   </div>
                 </div>
@@ -643,8 +646,28 @@ export default function Abonnement() {
               <CardContent className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Magasins actifs</Label>
-                    <Input readOnly value={`${activeStoreCount} magasin(s)`} />
+                    <Label>Nombre de magasins souhaités</Label>
+                    <Select
+                      value={String(requestedStoreCount)}
+                      onValueChange={(value) => setRequestedStoreCount(parseInt(value, 10))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 10 }, (_, index) => {
+                          const count = index + 1;
+                          return (
+                            <SelectItem key={count} value={String(count)}>
+                              {count} magasin{count > 1 ? 's' : ''}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      1 magasin inclus. Supplément appliqué dès le 2e.
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label>Durée</Label>
