@@ -23,9 +23,9 @@ const NotFound = () => {
             <CardContent className="py-12">
               <div className="flex flex-col items-center text-center">
                 <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg">
-                  <img src="/favicon.ico" alt="OpticAxon" className="h-7 w-7 rounded-sm" />
+                  <img src="/favicon.ico" alt="OrAxonOptic" className="h-7 w-7 rounded-sm" />
                 </div>
-                <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground">OpticAxon</p>
+                <p className="text-sm font-medium uppercase tracking-widest text-muted-foreground">OrAxonOptic</p>
                 <h1 className="mt-2 text-4xl font-bold text-foreground sm:text-5xl">Page introuvable</h1>
                 <p className="mt-3 max-w-xl text-base text-muted-foreground sm:text-lg">
                   Cette page n'existe pas ou a ete deplacee. Revenez a l'accueil ou connectez-vous pour continuer.

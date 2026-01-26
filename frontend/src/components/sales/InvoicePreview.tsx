@@ -47,7 +47,7 @@ export function InvoicePreview({
   const printRef = useRef<HTMLDivElement>(null);
 
   if (!invoice) return null;
-  const companyName = storeName?.trim() ? storeName : "OpticAxon";
+  const companyName = storeName?.trim() ? storeName : "OrAxonOptic";
   const companySub = storeSubtitle?.trim() ? storeSubtitle : "optic";
   const currencyLabel = storeCurrency?.trim() ? storeCurrency : "DH";
 

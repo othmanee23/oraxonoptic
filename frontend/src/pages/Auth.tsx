@@ -8,34 +8,54 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff, Loader2, AlertCircle, Check } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { z } from 'zod';
 import { apiFetch } from '@/lib/api';
 
-// Validation schemas
-const loginSchema = z.object({
-  email: z.string().email('Email invalide').max(255),
-  password: z.string().min(8, 'Mot de passe trop court (min. 8 caractères)'),
-});
+const INVISIBLE_OR_SPACE_REGEX = /[\p{C}\s]/u;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_REGEX = /^[\p{L}][\p{L}\s-]*$/u;
 
-const signupSchema = z.object({
-  firstName: z.string().min(2, 'Prénom trop court').max(50),
-  lastName: z.string().min(2, 'Nom trop court').max(50),
-  email: z.string().email('Email invalide').max(255),
-  phone: z.string().optional(),
-  password: z.string().min(8, 'Mot de passe trop court (min. 8 caractères)'),
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'Les mots de passe ne correspondent pas',
-  path: ['confirmPassword'],
-});
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
-const resetSchema = z.object({
-  password: z.string().min(8, 'Mot de passe trop court (min. 8 caractères)'),
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'Les mots de passe ne correspondent pas',
-  path: ['confirmPassword'],
-});
+const validateEmail = (value: string) => {
+  if (!value.trim()) return 'L’email est obligatoire.';
+  if (INVISIBLE_OR_SPACE_REGEX.test(value)) return 'L’email ne doit pas contenir d’espaces.';
+  const normalized = normalizeEmail(value);
+  if (!EMAIL_REGEX.test(normalized)) return 'Le format de l’email est invalide.';
+  return null;
+};
+
+const validateName = (value: string, label: 'prénom' | 'nom') => {
+  const trimmed = value.trim();
+  if (!trimmed) return `Le ${label} est obligatoire.`;
+  if (trimmed.length < 2) return `Le ${label} doit contenir au moins 2 caractères.`;
+  if (trimmed.length > 50) return `Le ${label} ne doit pas dépasser 50 caractères.`;
+  if (!NAME_REGEX.test(trimmed)) return `Le ${label} ne peut contenir que des lettres, espaces et tirets.`;
+  return null;
+};
+
+const validatePhone = (value: string) => {
+  if (!value.trim()) return null;
+  if (!/^\d{10}$/.test(value.trim())) {
+    return 'Le téléphone doit contenir exactement 10 chiffres (ex: 0612345678).';
+  }
+  return null;
+};
+
+const validatePassword = (value: string) => {
+  if (!value) return 'Le mot de passe est obligatoire.';
+  if (INVISIBLE_OR_SPACE_REGEX.test(value)) return 'Le mot de passe ne doit pas contenir d’espaces.';
+  if (value.length < 8) return 'Le mot de passe doit contenir au moins 8 caractères.';
+  if (!/[A-Z]/.test(value)) return 'Ajoutez au moins une majuscule.';
+  if (!/[0-9]/.test(value)) return 'Ajoutez au moins un chiffre.';
+  if (!/[^A-Za-z0-9]/.test(value)) return 'Ajoutez au moins un symbole (ex: !@#$…).';
+  return null;
+};
+
+const validatePasswordConfirmation = (password: string, confirmation: string) => {
+  if (!confirmation) return 'Confirmez votre mot de passe.';
+  if (password !== confirmation) return 'Les mots de passe ne correspondent pas.';
+  return null;
+};
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -74,25 +94,22 @@ export default function Auth() {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      email: formData.get('email') as string,
+      email: (formData.get('email') as string) || '',
       password: formData.get('password') as string,
     };
 
-    // Validate
-    const result = loginSchema.safeParse(data);
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.errors.forEach(err => {
-        if (err.path[0]) {
-          errors[err.path[0] as string] = err.message;
-        }
-      });
+    const errors: Record<string, string> = {};
+    const emailError = validateEmail(data.email);
+    if (emailError) errors.email = emailError;
+    const passwordError = validatePassword(data.password || '');
+    if (passwordError) errors.password = passwordError;
+    if (Object.keys(errors).length) {
       setValidationErrors(errors);
       return;
     }
 
     setIsLoading(true);
-    const response = await login(data.email, data.password);
+    const response = await login(normalizeEmail(data.email), data.password);
     setIsLoading(false);
 
     if (!response.success) {
@@ -143,18 +160,16 @@ export default function Auth() {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      password: formData.get('resetPassword') as string,
-      confirmPassword: formData.get('resetConfirmPassword') as string,
+      password: (formData.get('resetPassword') as string) || '',
+      confirmPassword: (formData.get('resetConfirmPassword') as string) || '',
     };
 
-    const result = resetSchema.safeParse(data);
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.errors.forEach(err => {
-        if (err.path[0]) {
-          errors[err.path[0] as string] = err.message;
-        }
-      });
+    const errors: Record<string, string> = {};
+    const passwordError = validatePassword(data.password);
+    if (passwordError) errors.password = passwordError;
+    const confirmError = validatePasswordConfirmation(data.password, data.confirmPassword);
+    if (confirmError) errors.confirmPassword = confirmError;
+    if (Object.keys(errors).length) {
       setValidationErrors(errors);
       return;
     }
@@ -193,33 +208,38 @@ export default function Auth() {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      firstName: formData.get('firstName') as string,
-      lastName: formData.get('lastName') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      password: formData.get('password') as string,
-      confirmPassword: formData.get('confirmPassword') as string,
+      firstName: (formData.get('firstName') as string) || '',
+      lastName: (formData.get('lastName') as string) || '',
+      email: (formData.get('email') as string) || '',
+      phone: (formData.get('phone') as string) || '',
+      password: (formData.get('password') as string) || '',
+      confirmPassword: (formData.get('confirmPassword') as string) || '',
     };
 
-    // Validate
-    const result = signupSchema.safeParse(data);
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.errors.forEach(err => {
-        if (err.path[0]) {
-          errors[err.path[0] as string] = err.message;
-        }
-      });
+    const errors: Record<string, string> = {};
+    const firstNameError = validateName(data.firstName, 'prénom');
+    if (firstNameError) errors.firstName = firstNameError;
+    const lastNameError = validateName(data.lastName, 'nom');
+    if (lastNameError) errors.lastName = lastNameError;
+    const emailError = validateEmail(data.email);
+    if (emailError) errors.email = emailError;
+    const phoneError = validatePhone(data.phone);
+    if (phoneError) errors.phone = phoneError;
+    const passwordError = validatePassword(data.password);
+    if (passwordError) errors.password = passwordError;
+    const confirmError = validatePasswordConfirmation(data.password, data.confirmPassword);
+    if (confirmError) errors.confirmPassword = confirmError;
+    if (Object.keys(errors).length) {
       setValidationErrors(errors);
       return;
     }
 
     setIsLoading(true);
     const response = await signup({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      phone: data.phone || undefined,
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      email: normalizeEmail(data.email),
+      phone: data.phone.trim() || undefined,
       password: data.password,
     });
     setIsLoading(false);
@@ -241,12 +261,15 @@ export default function Auth() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
-            <Eye className="h-7 w-7 text-white" />
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg">
+            <img
+              src="/logoo-02.jpg"
+              alt="OrAxonOptic"
+              className="h-full w-full object-cover"
+            />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">OpticAxon</h1>
-            <p className="text-sm text-muted-foreground">optic</p>
+            <h1 className="text-2xl font-bold text-foreground">OrAxonOptic</h1>
           </div>
         </div>
 
@@ -310,30 +333,60 @@ export default function Auth() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="resetPassword">Nouveau mot de passe</Label>
-                    <Input
-                      id="resetPassword"
-                      name="resetPassword"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      required
-                      disabled={isLoading}
-                      className={validationErrors.password ? 'border-destructive' : ''}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="resetPassword"
+                        name="resetPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                        className={validationErrors.password ? 'border-destructive pr-10' : 'pr-10'}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
                     {validationErrors.password && (
                       <p className="text-sm text-destructive">{validationErrors.password}</p>
                     )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="resetConfirmPassword">Confirmer le mot de passe</Label>
-                    <Input
-                      id="resetConfirmPassword"
-                      name="resetConfirmPassword"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      required
-                      disabled={isLoading}
-                      className={validationErrors.confirmPassword ? 'border-destructive' : ''}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="resetConfirmPassword"
+                        name="resetConfirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                        className={validationErrors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
                     {validationErrors.confirmPassword && (
                       <p className="text-sm text-destructive">{validationErrors.confirmPassword}</p>
                     )}
@@ -584,15 +637,30 @@ export default function Auth() {
 
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      required
-                      disabled={isLoading}
-                      className={validationErrors.confirmPassword ? 'border-destructive' : ''}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        required
+                        disabled={isLoading}
+                        className={validationErrors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
                     {validationErrors.confirmPassword && (
                       <p className="text-sm text-destructive">{validationErrors.confirmPassword}</p>
                     )}
@@ -616,7 +684,7 @@ export default function Auth() {
         </Card>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          © 2024 OpticAxon. Tous droits réservés.
+          © 2024 OrAxonOptic. Tous droits réservés.
         </p>
       </div>
     </div>

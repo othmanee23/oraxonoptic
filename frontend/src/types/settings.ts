@@ -58,7 +58,7 @@ export const invoiceColors = [
 ];
 
 export const defaultStoreSettings: StoreSettings = {
-  name: 'OpticAxon',
+  name: 'OrAxonOptic',
   subtitle: 'OPTIC',
   address: '',
   city: '',

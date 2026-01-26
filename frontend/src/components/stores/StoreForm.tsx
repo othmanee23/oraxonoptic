@@ -82,7 +82,7 @@ export function StoreForm({ store, onSubmit, onCancel }: StoreFormProps) {
           id="name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="OpticAxon Casablanca"
+          placeholder="OrAxonOptic Casablanca"
           disabled={isLoading}
           className={errors.name ? "border-destructive" : ""}
         />

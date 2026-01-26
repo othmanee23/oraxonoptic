@@ -76,7 +76,7 @@ const stats = [
   { value: '5 min', label: 'Configuration', sublabel: 'pour démarrer' },
   { value: '100%', label: 'Cloud', sublabel: 'accessible partout' },
   { value: '24/7', label: 'Disponibilité', sublabel: 'sans interruption' },
-  { value: '0€', label: 'Essai gratuit', sublabel: 'sans engagement' },
+  { value: '0 MAD', label: 'Essai gratuit', sublabel: 'sans engagement' },
 ];
 
 export default function Landing() {
@@ -87,26 +87,15 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/landing" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-accent shadow-lg shadow-primary/25">
-                <img
-                  src="/favicon.ico"
-                  alt="OpticAxon"
-                  className="h-6 w-6 rounded-sm"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground tracking-tight">OpticAxon</h1>
-              </div>
+              <img
+                src="/logo-03.png"
+                alt="OrAxonOptic"
+                className="h-[120px] w-[120px] rounded-xl"
+              />
             </Link>
             <div className="flex items-center gap-3">
-              <Button asChild variant="ghost" className="hidden sm:inline-flex">
-                <Link to="/auth">Connexion</Link>
-              </Button>
               <Button asChild className="shadow-lg shadow-primary/25">
-                <Link to="/auth?tab=signup">
-                  Commencer gratuitement
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                <Link to="/auth">Connexion</Link>
               </Button>
             </div>
           </div>
@@ -138,7 +127,7 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              OpticAxon centralise la gestion de vos clients, ventes, stocks et prescriptions 
+              OrAxonOptic centralise la gestion de vos clients, ventes, stocks et prescriptions 
               dans une application moderne et intuitive.
             </p>
             
@@ -156,7 +145,7 @@ export default function Landing() {
               <a href="#demo">
                 <Button size="lg" variant="outline" className="text-lg px-8 h-14 border-2">
                   <Eye className="mr-2 h-5 w-5" />
-                  Découvrez OpticAxon
+                  Découvrez OrAxonOptic
                 </Button>
               </a>
             </div>
@@ -199,12 +188,12 @@ export default function Landing() {
       <section id="demo" className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <Badge variant="outline" className="mb-4">Découvrez OpticAxon</Badge>
+            <Badge variant="outline" className="mb-4">Découvrez OrAxonOptic</Badge>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4 tracking-tight">
-              Voyez OpticAxon en action
+              Voyez OrAxonOptic en action
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Découvrez comment OpticAxon peut transformer la gestion de votre magasin d'optique
+              Découvrez comment OrAxonOptic peut transformer la gestion de votre magasin d'optique
             </p>
           </div>
           
@@ -212,7 +201,7 @@ export default function Landing() {
             <video
               className="absolute inset-0 h-full w-full object-cover"
               src="/reeloptic.mp4"
-              title="Presentation OpticAxon"
+              title="Presentation OrAxonOptic"
               controls
               playsInline
               preload="metadata"
@@ -259,14 +248,14 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <Badge variant="outline" className="mb-4">Pourquoi OpticAxon ?</Badge>
+              <Badge variant="outline" className="mb-4">Pourquoi OrAxonOptic ?</Badge>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6 tracking-tight">
                 Conçu pour les opticiens,
                 <br />
                 <span className="text-primary">par des experts</span>
               </h2>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                OpticAxon répond à tous vos besoins quotidiens avec une interface intuitive 
+                OrAxonOptic répond à tous vos besoins quotidiens avec une interface intuitive 
                 et des fonctionnalités pensées pour optimiser votre productivité.
               </p>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -333,11 +322,11 @@ export default function Landing() {
                 Prêt à transformer votre activité ?
               </h2>
               <p className="text-lg text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
-                Rejoignez des centaines d'opticiens qui ont déjà optimisé leur gestion avec OpticAxon. 
+                Rejoignez des centaines d'opticiens qui ont déjà optimisé leur gestion avec OrAxonOptic. 
                 Commencez votre essai gratuit dès aujourd'hui.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to="/auth">
+                <Link to="/auth?tab=signup">
                   <Button size="lg" variant="secondary" className="text-lg px-8 h-14 shadow-xl">
                     Créer mon compte gratuit
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -359,15 +348,15 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg">
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg">
                 <img
-                  src="/favicon.ico"
-                  alt="OpticAxon"
-                  className="h-6 w-6 rounded-sm"
+                  src="/logoo-01.jpg"
+                  alt="OrAxonOptic"
+                  className="h-full w-full object-cover"
                 />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">OpticAxon</h1>
+                <h1 className="text-lg font-bold text-foreground">OrAxonOptic</h1>
                 <p className="text-xs text-muted-foreground">Solution de gestion pour opticiens</p>
               </div>
             </div>
@@ -377,7 +366,7 @@ export default function Landing() {
               <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} OpticAxon. Tous droits réservés.
+              © {new Date().getFullYear()} OrAxonOptic. Tous droits réservés.
             </p>
           </div>
         </div>

@@ -26,7 +26,7 @@ class StoreNotificationMail extends Mailable
 
     public function build()
     {
-        return $this->subject('OpticAxon - '.$this->title)
+        return $this->subject('OrAxonOptic - '.$this->title)
             ->view('emails.store-notification');
     }
 }

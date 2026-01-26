@@ -73,7 +73,7 @@ const mapApiUser = (user: ApiUser): User => {
   };
 };
 
-const mapFieldErrors = (errors?: Record<string, string[]>): Record<string, string> | undefined => {
+const mapFieldErrors = (errors?: Record<string, Array<string | { code?: string; message?: string }>>): Record<string, string> | undefined => {
   if (!errors) return undefined;
   const fieldMap: Record<string, string> = {
     first_name: 'firstName',
@@ -86,7 +86,8 @@ const mapFieldErrors = (errors?: Record<string, string[]>): Record<string, strin
   return Object.entries(errors).reduce<Record<string, string>>((acc, [field, messages]) => {
     const key = fieldMap[field] || field;
     if (messages?.[0]) {
-      acc[key] = messages[0];
+      const first = messages[0];
+      acc[key] = typeof first === 'string' ? first : (first.message || 'Erreur de validation.');
     }
     return acc;
   }, {});
@@ -229,8 +230,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true, user: mappedUser };
     } catch (error) {
       console.error('Login error:', error);
-      const message = error instanceof Error ? error.message : 'Une erreur est survenue. Veuillez réessayer.';
-      const fieldErrors = mapFieldErrors((error as Error & { errors?: Record<string, string[]> }).errors);
+      const status = (error as Error & { status?: number }).status;
+      let message = error instanceof Error ? error.message : 'Une erreur est survenue. Veuillez réessayer.';
+      if (status === 401) {
+        message = 'Identifiants incorrects.';
+      } else if (status === 429) {
+        message = 'Trop de tentatives. Réessayez dans 1 minute.';
+      } else if (status === 500) {
+        message = 'Une erreur est survenue. Réessayez plus tard.';
+      }
+      const fieldErrors = mapFieldErrors((error as Error & { errors?: Record<string, Array<string | { code?: string; message?: string }>> }).errors);
       return { success: false, error: message, fieldErrors };
     }
   }, []);
@@ -256,8 +265,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     } catch (error) {
       console.error('Signup error:', error);
-      const message = error instanceof Error ? error.message : 'Une erreur est survenue. Veuillez réessayer.';
-      const fieldErrors = mapFieldErrors((error as Error & { errors?: Record<string, string[]> }).errors);
+      const status = (error as Error & { status?: number }).status;
+      let message = error instanceof Error ? error.message : 'Une erreur est survenue. Veuillez réessayer.';
+      if (status === 429) {
+        message = 'Trop de tentatives. Réessayez dans 1 minute.';
+      } else if (status === 500) {
+        message = 'Une erreur est survenue. Réessayez plus tard.';
+      }
+      const fieldErrors = mapFieldErrors((error as Error & { errors?: Record<string, Array<string | { code?: string; message?: string }>> }).errors);
       return { success: false, error: message, fieldErrors };
     }
   }, []);

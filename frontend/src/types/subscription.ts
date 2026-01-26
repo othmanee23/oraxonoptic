@@ -118,7 +118,7 @@ export interface BankInfo {
 
 export const defaultBankInfo: BankInfo = {
   bankName: 'Banque Nationale',
-  accountName: 'OpticAxon OPTIC SARL',
+  accountName: 'OrAxonOptic OPTIC SARL',
   iban: 'MA00 0000 0000 0000 0000 0000 000',
   swift: 'BNMAMAMC',
   rib: '',

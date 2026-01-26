@@ -14,7 +14,7 @@ class BankInfoController extends Controller
         if (! $bankInfo) {
             return response()->json([
                 'bank_name' => 'Banque Nationale',
-                'account_name' => 'OpticAxon OPTIC SARL',
+                'account_name' => 'OrAxonOptic OPTIC SARL',
                 'iban' => '',
                 'swift' => '',
                 'rib' => '',

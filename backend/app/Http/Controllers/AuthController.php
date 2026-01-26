@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Mail\AdminEmailVerification;
+use App\Models\User;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,15 +13,9 @@ use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+        $validated = $request->validated();
 
         $user = User::create([
             'name' => trim($validated['first_name'].' '.$validated['last_name']),
@@ -39,17 +35,15 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $validated = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+        $validated = $request->validated();
 
         if (! Auth::attempt($validated)) {
             return response()->json([
-                'message' => 'Invalid credentials.',
-            ], 422);
+                'message' => 'Identifiants incorrects.',
+                'code' => 'AUTH_INVALID_CREDENTIALS',
+            ], 401);
         }
 
         $user = $request->user();

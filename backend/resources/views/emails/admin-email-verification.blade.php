@@ -11,6 +11,6 @@
       <a href="{{ $verificationUrl }}">Verifier mon email</a>
     </p>
     <p>Si vous n'etes pas a l'origine de cette demande, ignorez ce message.</p>
-    <p>Equipe OpticAxon</p>
+    <p>Equipe OrAxonOptic</p>
   </body>
 </html>

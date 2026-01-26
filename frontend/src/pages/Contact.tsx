@@ -5,11 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Scan, Mail, Phone, MapPin, Send, Clock, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Send, Clock, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api';
 
-const WHATSAPP_NUMBER = '0622787541';
+const WHATSAPP_NUMBER = '+212 708-517370';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -51,7 +51,7 @@ export default function Contact() {
   };
 
   const openWhatsApp = () => {
-    const message = encodeURIComponent('Bonjour, je souhaite en savoir plus sur OpticAxon.');
+    const message = encodeURIComponent('Bonjour, je souhaite en savoir plus sur OrAxonOptic.');
     window.open(`https://wa.me/${WHATSAPP_NUMBER.replace(/[^0-9]/g, '')}?text=${message}`, '_blank');
   };
 
@@ -62,10 +62,11 @@ export default function Contact() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/landing" className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent">
-                <Scan className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-bold text-foreground">OpticAxon</span>
+              <img
+                src="/logo-03.png"
+                alt="OrAxonOptic"
+                className="h-[104px] w-[104px] rounded-xl"
+              />
             </Link>
             <Link to="/landing">
               <Button variant="ghost" size="sm">
@@ -98,8 +99,7 @@ export default function Contact() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">contact@optigest.com</p>
-                <p className="text-muted-foreground">support@optigest.com</p>
+                <p className="text-muted-foreground">support@oraxonoptic.com</p>
               </CardContent>
             </Card>
 
@@ -111,7 +111,7 @@ export default function Contact() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">+212 5XX-XXXXXX</p>
+                <p className="text-muted-foreground">+212 708-517370</p>
               </CardContent>
             </Card>
 
@@ -123,22 +123,10 @@ export default function Contact() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Lundi - Vendredi</p>
-                <p className="text-muted-foreground">9h00 - 18h00</p>
+                <p className="text-muted-foreground">24h/24 • 7j/7</p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  Adresse
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Casablanca, Maroc</p>
-              </CardContent>
-            </Card>
 
             {/* WhatsApp Button */}
             <Button 

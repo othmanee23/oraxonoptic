@@ -27,7 +27,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   if (!response.ok) {
     let message = 'Request failed';
-    let errors: Record<string, string[]> | undefined;
+    let errors: Record<string, Array<string | { code?: string; message?: string }>> | undefined;
     try {
       const data = await response.json();
       if (data?.message) {
@@ -37,7 +37,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
         errors = data.errors;
         const firstField = Object.keys(errors)[0];
         if (firstField && errors[firstField]?.[0]) {
-          message = errors[firstField][0];
+          const firstError = errors[firstField][0];
+          message = typeof firstError === 'string' ? firstError : (firstError.message || message);
         }
       }
     } catch {
@@ -45,7 +46,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     }
     const error = new Error(message);
     (error as Error & { status?: number }).status = response.status;
-    (error as Error & { errors?: Record<string, string[]> }).errors = errors;
+    (error as Error & { errors?: Record<string, Array<string | { code?: string; message?: string }>> }).errors = errors;
     throw error;
   }
 

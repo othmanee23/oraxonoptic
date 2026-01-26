@@ -12,6 +12,6 @@
     <p><strong>Sujet:</strong> {{ $contactMessage->subject }}</p>
     <p><strong>Message:</strong></p>
     <p>{!! nl2br(e($contactMessage->message)) !!}</p>
-    <p>Equipe OpticAxon</p>
+    <p>Equipe OrAxonOptic</p>
   </body>
 </html>
