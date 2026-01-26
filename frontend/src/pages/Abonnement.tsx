@@ -167,12 +167,16 @@ export default function Abonnement() {
 
     apiFetch<{
       monthly_price: number;
+      semiannual_price: number;
+      annual_price: number;
       price_per_store: number;
       currency: string;
     }>('/api/pricing-config')
       .then((config) => {
         setPricingConfig({
           monthlyPrice: Number(config.monthly_price),
+          semiannualPrice: Number(config.semiannual_price),
+          annualPrice: Number(config.annual_price),
           pricePerStore: Number(config.price_per_store),
           currency: config.currency || 'DH',
         });
@@ -323,11 +327,14 @@ export default function Abonnement() {
     (option) => option.months.toString() === selectedDuration
   );
   const extraStoreCount = Math.max(0, activeStoreCount - 1);
-  const monthlyTotal =
-    (pricingConfig?.monthlyPrice ?? defaultPricingConfig.monthlyPrice) +
-    ((pricingConfig?.pricePerStore ?? defaultPricingConfig.pricePerStore) * extraStoreCount);
+  const baseDurationPrice = selectedDurationValue?.months === 12
+    ? (pricingConfig.annualPrice ?? defaultPricingConfig.annualPrice)
+    : selectedDurationValue?.months === 6
+      ? (pricingConfig.semiannualPrice ?? defaultPricingConfig.semiannualPrice)
+      : (pricingConfig.monthlyPrice ?? defaultPricingConfig.monthlyPrice);
+  const perStoreAddon = (pricingConfig.pricePerStore ?? defaultPricingConfig.pricePerStore) * extraStoreCount;
   const selectedAmount = Math.round(
-    monthlyTotal * (selectedDurationValue?.months ?? 0)
+    baseDurationPrice + (perStoreAddon * (selectedDurationValue?.months ?? 0))
   );
 
   const handleSubmitPayment = async () => {
@@ -473,7 +480,7 @@ export default function Abonnement() {
                   <div>
                     <p className="text-sm text-muted-foreground">Votre tarif mensuel</p>
                     <p className="text-2xl font-bold text-primary">
-                      {monthlyTotal.toLocaleString()} {pricingConfig.currency}/mois
+                      {pricingConfig.monthlyPrice.toLocaleString()} {pricingConfig.currency}/mois
                     </p>
                     <div className="text-xs text-muted-foreground mt-1">
                       Inclut 1 magasin

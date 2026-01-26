@@ -276,11 +276,15 @@ export default function AdminSaas() {
     try {
       const config = await apiFetch<{
         monthly_price: number;
+        semiannual_price: number;
+        annual_price: number;
         price_per_store: number;
         currency: string;
       }>('/api/pricing-config');
       const mappedConfig: PricingConfig = {
         monthlyPrice: Number(config.monthly_price),
+        semiannualPrice: Number(config.semiannual_price),
+        annualPrice: Number(config.annual_price),
         pricePerStore: Number(config.price_per_store),
         currency: config.currency || 'DH',
       };
@@ -411,6 +415,8 @@ export default function AdminSaas() {
       method: 'PUT',
       body: JSON.stringify({
         monthly_price: tempPricingConfig.monthlyPrice,
+        semiannual_price: tempPricingConfig.semiannualPrice,
+        annual_price: tempPricingConfig.annualPrice,
         price_per_store: tempPricingConfig.pricePerStore,
         currency: tempPricingConfig.currency,
       }),
@@ -418,6 +424,8 @@ export default function AdminSaas() {
       .then((config) => {
         const mappedConfig: PricingConfig = {
           monthlyPrice: Number((config as any).monthly_price),
+          semiannualPrice: Number((config as any).semiannual_price),
+          annualPrice: Number((config as any).annual_price),
           pricePerStore: Number((config as any).price_per_store),
           currency: (config as any).currency || 'DH',
         };
@@ -1395,6 +1403,34 @@ export default function AdminSaas() {
                       setTempPricingConfig((prev) => ({
                         ...prev,
                         monthlyPrice: Number(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2 mt-4">
+                  <Label>Prix semestriel (6 mois)</Label>
+                  <Input
+                    type="number"
+                    value={tempPricingConfig.semiannualPrice}
+                    onChange={(e) =>
+                      setTempPricingConfig((prev) => ({
+                        ...prev,
+                        semiannualPrice: Number(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2 mt-4">
+                  <Label>Prix annuel (12 mois)</Label>
+                  <Input
+                    type="number"
+                    value={tempPricingConfig.annualPrice}
+                    onChange={(e) =>
+                      setTempPricingConfig((prev) => ({
+                        ...prev,
+                        annualPrice: Number(e.target.value) || 0,
                       }))
                     }
                     placeholder="0"

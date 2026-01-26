@@ -75,13 +75,17 @@ export const defaultSubscriptionOffers: SubscriptionOffer[] = [
 
 // Pricing configuration
 export interface PricingConfig {
-  monthlyPrice: number; // Price per month for base subscription
+  monthlyPrice: number; // Base price for 1 month
+  semiannualPrice: number; // Base price for 6 months
+  annualPrice: number; // Base price for 12 months
   pricePerStore: number; // Additional price per store per month
   currency: string;
 }
 
 export const defaultPricingConfig: PricingConfig = {
   monthlyPrice: 200, // 200 DH/month base
+  semiannualPrice: 960, // 960 DH/6 months base
+  annualPrice: 1680, // 1680 DH/12 months base
   pricePerStore: 70, // 70 DH/store/month
   currency: 'DH',
 };
@@ -92,8 +96,8 @@ export const getSubscriptionPlans = (storeCount: number = 1): SubscriptionPlan[]
 
   return [
     { months: 1, price: monthlyTotal, label: '1 mois' },
-    { months: 6, price: Math.round(monthlyTotal * 6), label: '6 mois' },
-    { months: 12, price: Math.round(monthlyTotal * 12), label: '12 mois' },
+    { months: 6, price: Math.round(defaultPricingConfig.semiannualPrice + (defaultPricingConfig.pricePerStore * storeCount * 6)), label: '6 mois' },
+    { months: 12, price: Math.round(defaultPricingConfig.annualPrice + (defaultPricingConfig.pricePerStore * storeCount * 12)), label: '12 mois' },
   ];
 };
 
