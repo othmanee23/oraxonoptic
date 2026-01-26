@@ -29,6 +29,13 @@ export interface SubscriptionPlan {
   label: string;
 }
 
+export interface SubscriptionDuration {
+  months: number;
+  basePrice: number;
+  label: string;
+  sortOrder: number;
+}
+
 export interface SubscriptionOffer {
   key: string;
   label: string;
@@ -89,6 +96,14 @@ export const defaultPricingConfig: PricingConfig = {
   pricePerStore: 70, // 70 DH/store/month
   currency: 'DH',
 };
+
+export const getDefaultSubscriptionDurations = (
+  pricingConfig: PricingConfig = defaultPricingConfig
+): SubscriptionDuration[] => [
+  { months: 1, basePrice: pricingConfig.monthlyPrice, label: '1 mois', sortOrder: 1 },
+  { months: 6, basePrice: pricingConfig.semiannualPrice, label: '6 mois', sortOrder: 2 },
+  { months: 12, basePrice: pricingConfig.annualPrice, label: '12 mois', sortOrder: 3 },
+];
 
 // Calculate subscription plans dynamically based on pricing config
 export const getSubscriptionPlans = (storeCount: number = 1): SubscriptionPlan[] => {

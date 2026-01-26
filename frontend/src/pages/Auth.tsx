@@ -51,6 +51,11 @@ const validatePassword = (value: string) => {
   return null;
 };
 
+const validateLoginPassword = (value: string) => {
+  if (!value) return 'Le mot de passe est obligatoire.';
+  return null;
+};
+
 const validatePasswordConfirmation = (password: string, confirmation: string) => {
   if (!confirmation) return 'Confirmez votre mot de passe.';
   if (password !== confirmation) return 'Les mots de passe ne correspondent pas.';
@@ -101,7 +106,7 @@ export default function Auth() {
     const errors: Record<string, string> = {};
     const emailError = validateEmail(data.email);
     if (emailError) errors.email = emailError;
-    const passwordError = validatePassword(data.password || '');
+    const passwordError = validateLoginPassword(data.password || '');
     if (passwordError) errors.password = passwordError;
     if (Object.keys(errors).length) {
       setValidationErrors(errors);

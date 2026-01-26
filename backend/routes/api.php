@@ -8,6 +8,7 @@ use App\Http\Controllers\AdminOpticienController;
 use App\Http\Controllers\BankInfoController;
 use App\Http\Controllers\PricingConfigController;
 use App\Http\Controllers\SubscriptionOfferController;
+use App\Http\Controllers\SubscriptionDurationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\StoreController;
@@ -65,6 +66,9 @@ Route::middleware(['auth:sanctum', 'store.context'])->group(function () {
 
     Route::get('/subscription-offers', [SubscriptionOfferController::class, 'index']);
     Route::put('/subscription-offers', [SubscriptionOfferController::class, 'update']);
+
+    Route::get('/subscription-durations', [SubscriptionDurationController::class, 'index']);
+    Route::put('/subscription-durations', [SubscriptionDurationController::class, 'update']);
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);

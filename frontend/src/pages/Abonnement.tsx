@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { format, differenceInDays, differenceInMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Subscription, PaymentRequest, BankInfo, PricingConfig, defaultPricingConfig } from "@/types/subscription";
+import { Subscription, PaymentRequest, BankInfo, PricingConfig, SubscriptionDuration, defaultPricingConfig, getDefaultSubscriptionDurations } from "@/types/subscription";
 import { Store } from "@/types/store";
 
 type ApiSubscription = {
@@ -72,6 +72,9 @@ export default function Abonnement() {
   const [activeStoreCount, setActiveStoreCount] = useState(1);
   const [requestedStoreCount, setRequestedStoreCount] = useState(1);
   const [pricingConfig, setPricingConfig] = useState<PricingConfig>(defaultPricingConfig);
+  const [durationOptions, setDurationOptions] = useState<SubscriptionDuration[]>(
+    getDefaultSubscriptionDurations(defaultPricingConfig)
+  );
   const [bankInfo, setBankInfo] = useState<BankInfo>({
     bankName: '',
     accountName: '',
@@ -164,25 +167,54 @@ export default function Abonnement() {
         // Keep defaults if request fails.
       });
 
-    apiFetch<{
-      monthly_price: number;
-      semiannual_price: number;
-      annual_price: number;
-      price_per_store: number;
-      currency: string;
-    }>('/api/pricing-config')
-      .then((config) => {
-        setPricingConfig({
-          monthlyPrice: Number(config.monthly_price),
-          semiannualPrice: Number(config.semiannual_price),
-          annualPrice: Number(config.annual_price),
-          pricePerStore: Number(config.price_per_store),
-          currency: config.currency || 'DH',
-        });
-      })
-      .catch(() => {
-        setPricingConfig(defaultPricingConfig);
-      });
+    let resolvedPricingConfig = defaultPricingConfig;
+    try {
+      const config = await apiFetch<{
+        monthly_price: number;
+        semiannual_price: number;
+        annual_price: number;
+        price_per_store: number;
+        currency: string;
+      }>('/api/pricing-config');
+      resolvedPricingConfig = {
+        monthlyPrice: Number(config.monthly_price),
+        semiannualPrice: Number(config.semiannual_price),
+        annualPrice: Number(config.annual_price),
+        pricePerStore: Number(config.price_per_store),
+        currency: config.currency || 'DH',
+      };
+      setPricingConfig(resolvedPricingConfig);
+    } catch {
+      setPricingConfig(defaultPricingConfig);
+      resolvedPricingConfig = defaultPricingConfig;
+    }
+
+    try {
+      const durations = await apiFetch<{
+        months: number;
+        base_price: number;
+        label: string;
+        sort_order: number;
+      }[]>('/api/subscription-durations');
+      const mappedDurations = durations
+        .map((duration) => ({
+          months: Number(duration.months),
+          basePrice: Number(duration.base_price),
+          label: duration.label,
+          sortOrder: Number(duration.sort_order),
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      setDurationOptions(mappedDurations);
+      if (!mappedDurations.some((duration) => duration.months.toString() === selectedDuration)) {
+        setSelectedDuration(mappedDurations[0]?.months.toString() ?? '1');
+      }
+    } catch {
+      const fallbackDurations = getDefaultSubscriptionDurations(resolvedPricingConfig);
+      setDurationOptions(fallbackDurations);
+      if (!fallbackDurations.some((duration) => duration.months.toString() === selectedDuration)) {
+        setSelectedDuration(fallbackDurations[0]?.months.toString() ?? '1');
+      }
+    }
 
     // Load user's stores and calculate active count
     apiFetch<{
@@ -318,21 +350,11 @@ export default function Abonnement() {
     }
   };
 
-  const durationOptions = [
-    { months: 1, label: '1 mois' },
-    { months: 6, label: '6 mois' },
-    { months: 12, label: '12 mois' },
-  ];
-
   const selectedDurationValue = durationOptions.find(
     (option) => option.months.toString() === selectedDuration
   );
   const extraStoreCount = Math.max(0, requestedStoreCount - 1);
-  const baseDurationPrice = selectedDurationValue?.months === 12
-    ? (pricingConfig.annualPrice ?? defaultPricingConfig.annualPrice)
-    : selectedDurationValue?.months === 6
-      ? (pricingConfig.semiannualPrice ?? defaultPricingConfig.semiannualPrice)
-      : (pricingConfig.monthlyPrice ?? defaultPricingConfig.monthlyPrice);
+  const baseDurationPrice = selectedDurationValue?.basePrice ?? 0;
   const perStoreAddon = (pricingConfig.pricePerStore ?? defaultPricingConfig.pricePerStore) * extraStoreCount;
   const selectedAmount = Math.round(
     baseDurationPrice + (perStoreAddon * (selectedDurationValue?.months ?? 0))

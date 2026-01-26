@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { User, defaultPermissions } from "@/types/auth";
-import { Subscription, PaymentRequest, PricingConfig, defaultPricingConfig, BankInfo } from "@/types/subscription";
+import { Subscription, PaymentRequest, PricingConfig, SubscriptionDuration, defaultPricingConfig, getDefaultSubscriptionDurations, BankInfo } from "@/types/subscription";
 import { Store } from "@/types/store";
 import { addMonths } from "date-fns";
 import { apiFetch } from "@/lib/api";
@@ -157,6 +157,9 @@ export default function AdminSaas() {
   const [opticiens, setOpticiens] = useState<(User & { storeCount?: number; subscription?: Subscription })[]>([]);
   const [allStores, setAllStores] = useState<StoreWithOwner[]>([]);
   const [pricingConfig, setPricingConfig] = useState<PricingConfig>(defaultPricingConfig);
+  const [durationOffers, setDurationOffers] = useState<SubscriptionDuration[]>(
+    getDefaultSubscriptionDurations(defaultPricingConfig)
+  );
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [pendingUsers, setPendingUsers] = useState<(User & { storeCount?: number; subscription?: Subscription })[]>([]);
   const [stats, setStats] = useState<OpticiensStats>({
@@ -195,6 +198,9 @@ export default function AdminSaas() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [tempPricingConfig, setTempPricingConfig] = useState<PricingConfig>(defaultPricingConfig);
+  const [tempDurationOffers, setTempDurationOffers] = useState<SubscriptionDuration[]>(
+    getDefaultSubscriptionDurations(defaultPricingConfig)
+  );
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [selectedOpticienHistory, setSelectedOpticienHistory] = useState<(User & { storeCount?: number; subscription?: Subscription }) | null>(null);
   const [showAllPaymentsHistory, setShowAllPaymentsHistory] = useState(false);
@@ -273,6 +279,7 @@ export default function AdminSaas() {
         setAllStores([]);
       });
     
+    let resolvedPricingConfig = defaultPricingConfig;
     try {
       const config = await apiFetch<{
         monthly_price: number;
@@ -288,11 +295,35 @@ export default function AdminSaas() {
         pricePerStore: Number(config.price_per_store),
         currency: config.currency || 'DH',
       };
+      resolvedPricingConfig = mappedConfig;
       setPricingConfig(mappedConfig);
       setTempPricingConfig(mappedConfig);
     } catch {
       setPricingConfig(defaultPricingConfig);
       setTempPricingConfig(defaultPricingConfig);
+    }
+
+    try {
+      const durations = await apiFetch<{
+        months: number;
+        base_price: number;
+        label: string;
+        sort_order: number;
+      }[]>('/api/subscription-durations');
+      const mappedDurations = durations
+        .map((duration) => ({
+          months: Number(duration.months),
+          basePrice: Number(duration.base_price),
+          label: duration.label,
+          sortOrder: Number(duration.sort_order),
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      setDurationOffers(mappedDurations);
+      setTempDurationOffers(mappedDurations);
+    } catch {
+      const fallbackDurations = getDefaultSubscriptionDurations(resolvedPricingConfig);
+      setDurationOffers(fallbackDurations);
+      setTempDurationOffers(fallbackDurations);
     }
 
     try {
@@ -408,40 +439,86 @@ export default function AdminSaas() {
       });
   };
 
-  const handleSavePricing = () => {
-    apiFetch('/api/pricing-config', {
-      method: 'PUT',
-      body: JSON.stringify({
-        monthly_price: tempPricingConfig.monthlyPrice,
-        semiannual_price: tempPricingConfig.semiannualPrice,
-        annual_price: tempPricingConfig.annualPrice,
-        price_per_store: tempPricingConfig.pricePerStore,
-        currency: tempPricingConfig.currency,
-      }),
-    })
-      .then((config) => {
-        const mappedConfig: PricingConfig = {
-          monthlyPrice: Number((config as any).monthly_price),
-          semiannualPrice: Number((config as any).semiannual_price),
-          annualPrice: Number((config as any).annual_price),
-          pricePerStore: Number((config as any).price_per_store),
-          currency: (config as any).currency || 'DH',
-        };
-        setPricingConfig(mappedConfig);
-        setTempPricingConfig(mappedConfig);
-        setShowPricingDialog(false);
-        toast({
-          title: "Tarification mise à jour",
-          description: "Les nouveaux prix ont été enregistrés",
-        });
-      })
-      .catch(() => {
-        toast({
-          title: "Erreur",
-          description: "Impossible d'enregistrer la tarification",
-          variant: "destructive",
-        });
+  const handleSavePricing = async () => {
+    const normalizedDurations = tempDurationOffers.map((offer, index) => ({
+      months: Number(offer.months) || 1,
+      base_price: Number(offer.basePrice) || 0,
+      label: offer.label?.trim() || `${offer.months} mois`,
+      sort_order: Number.isFinite(offer.sortOrder) ? Number(offer.sortOrder) : index + 1,
+    }));
+
+    try {
+      const [config, durations] = await Promise.all([
+        apiFetch('/api/pricing-config', {
+          method: 'PUT',
+          body: JSON.stringify({
+            monthly_price: tempPricingConfig.monthlyPrice,
+            semiannual_price: tempPricingConfig.semiannualPrice,
+            annual_price: tempPricingConfig.annualPrice,
+            price_per_store: tempPricingConfig.pricePerStore,
+            currency: tempPricingConfig.currency,
+          }),
+        }),
+        apiFetch('/api/subscription-durations', {
+          method: 'PUT',
+          body: JSON.stringify({
+            durations: normalizedDurations,
+          }),
+        }),
+      ]);
+
+      const mappedConfig: PricingConfig = {
+        monthlyPrice: Number((config as any).monthly_price),
+        semiannualPrice: Number((config as any).semiannual_price),
+        annualPrice: Number((config as any).annual_price),
+        pricePerStore: Number((config as any).price_per_store),
+        currency: (config as any).currency || 'DH',
+      };
+
+      const mappedDurations = (durations as any[])
+        .map((duration) => ({
+          months: Number(duration.months),
+          basePrice: Number(duration.base_price),
+          label: duration.label,
+          sortOrder: Number(duration.sort_order),
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+
+      setPricingConfig(mappedConfig);
+      setTempPricingConfig(mappedConfig);
+      setDurationOffers(mappedDurations);
+      setTempDurationOffers(mappedDurations);
+      setShowPricingDialog(false);
+      toast({
+        title: "Tarification mise à jour",
+        description: "Les nouveaux prix et durées ont été enregistrés",
       });
+    } catch {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer la tarification",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddDuration = () => {
+    setTempDurationOffers((prev) => {
+      const nextOrder = prev.length ? Math.max(...prev.map((offer) => offer.sortOrder)) + 1 : 1;
+      return [
+        ...prev,
+        {
+          months: 3,
+          basePrice: 0,
+          label: '3 mois',
+          sortOrder: nextOrder,
+        },
+      ];
+    });
+  };
+
+  const handleRemoveDuration = (index: number) => {
+    setTempDurationOffers((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   const handleSaveBankInfo = () => {
@@ -755,6 +832,7 @@ export default function AdminSaas() {
             </Button>
             <Button variant="outline" onClick={() => {
               setTempPricingConfig(pricingConfig);
+              setTempDurationOffers(durationOffers);
               setShowPricingDialog(true);
             }}>
               <Settings className="h-4 w-4 mr-2" />
@@ -1447,12 +1525,102 @@ export default function AdminSaas() {
                   />
                 </div>
               </div>
+              <div className="space-y-4 rounded-lg border border-border p-4">
+                <div className="flex items-center justify-between">
+                  <Label>Durées disponibles</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddDuration}>
+                    Ajouter une durée
+                  </Button>
+                </div>
+                <div className="space-y-4">
+                  {tempDurationOffers.map((offer, index) => (
+                    <div key={`${offer.months}-${index}`} className="rounded-lg border border-border/60 p-3">
+                      <div className="grid grid-cols-12 gap-3">
+                        <div className="col-span-3 space-y-1">
+                          <Label className="text-xs">Mois</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={offer.months}
+                            onChange={(e) => {
+                              const value = Number(e.target.value) || 1;
+                              setTempDurationOffers((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === index ? { ...item, months: value } : item
+                                )
+                              );
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-4 space-y-1">
+                          <Label className="text-xs">Libellé</Label>
+                          <Input
+                            value={offer.label}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setTempDurationOffers((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === index ? { ...item, label: value } : item
+                                )
+                              );
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-3 space-y-1">
+                          <Label className="text-xs">Prix de base</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={offer.basePrice}
+                            onChange={(e) => {
+                              const value = Number(e.target.value) || 0;
+                              setTempDurationOffers((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === index ? { ...item, basePrice: value } : item
+                                )
+                              );
+                            }}
+                          />
+                        </div>
+                        <div className="col-span-2 space-y-1">
+                          <Label className="text-xs">Ordre</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={offer.sortOrder}
+                            onChange={(e) => {
+                              const value = Number(e.target.value) || 0;
+                              setTempDurationOffers((prev) =>
+                                prev.map((item, idx) =>
+                                  idx === index ? { ...item, sortOrder: value } : item
+                                )
+                              );
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end pt-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={tempDurationOffers.length <= 1}
+                          onClick={() => handleRemoveDuration(index)}
+                        >
+                          Supprimer
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button
                 variant="outline"
                 onClick={() => {
                   setTempPricingConfig(pricingConfig);
+                  setTempDurationOffers(durationOffers);
                   setShowPricingDialog(false);
                 }}
               >
