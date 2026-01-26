@@ -585,21 +585,20 @@ export default function Abonnement() {
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
-                  {bankInfo.rib && (
-                    <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div>
-                        <p className="text-xs text-muted-foreground">RIB</p>
-                        <p className="font-mono text-sm">{bankInfo.rib}</p>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => copyToClipboard(bankInfo.rib || '')}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
+                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div>
+                      <p className="text-xs text-muted-foreground">RIB</p>
+                      <p className="font-mono text-sm">{bankInfo.rib || '-'}</p>
                     </div>
-                  )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => copyToClipboard(bankInfo.rib || '')}
+                      disabled={!bankInfo.rib}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
