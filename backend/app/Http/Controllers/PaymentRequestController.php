@@ -44,6 +44,7 @@ class PaymentRequestController extends Controller
             'amount' => ['required', 'numeric', 'min:0'],
             'screenshot' => ['required', 'string'],
             'plan_key' => ['nullable', 'string', 'max:50'],
+            'stores_count' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $paymentRequest = PaymentRequest::create([
@@ -53,6 +54,7 @@ class PaymentRequestController extends Controller
             'amount' => $validated['amount'],
             'months_requested' => $validated['months_requested'],
             'plan_key' => $validated['plan_key'] ?? null,
+            'stores_count' => $validated['stores_count'] ?? null,
             'screenshot' => $validated['screenshot'],
             'submitted_at' => now(),
             'status' => 'pending',
@@ -171,7 +173,10 @@ class PaymentRequestController extends Controller
         if ($user) {
             $user->is_pending_approval = false;
             $user->is_active = true;
-            if ($paymentRequest->plan_key) {
+            if ($paymentRequest->stores_count) {
+                $currentLimit = $user->max_stores ?? 0;
+                $user->max_stores = max($currentLimit, (int) $paymentRequest->stores_count);
+            } elseif ($paymentRequest->plan_key) {
                 $offer = \App\Models\SubscriptionOffer::query()
                     ->where('key', $paymentRequest->plan_key)
                     ->first();

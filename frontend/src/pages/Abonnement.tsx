@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { format, differenceInDays, differenceInMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Subscription, PaymentRequest, BankInfo, SubscriptionOffer, defaultSubscriptionOffers } from "@/types/subscription";
+import { Subscription, PaymentRequest, BankInfo, PricingConfig, defaultPricingConfig } from "@/types/subscription";
 import { Store } from "@/types/store";
 
 type ApiSubscription = {
@@ -52,6 +52,7 @@ type ApiPaymentRequest = {
   amount: number;
   months_requested: number;
   plan_key?: string | null;
+  stores_count?: number | null;
   screenshot: string;
   submitted_at: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -69,7 +70,7 @@ export default function Abonnement() {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [allPaymentRequests, setAllPaymentRequests] = useState<PaymentRequest[]>([]);
   const [activeStoreCount, setActiveStoreCount] = useState(1);
-  const [subscriptionOffers, setSubscriptionOffers] = useState<SubscriptionOffer[]>(defaultSubscriptionOffers);
+  const [pricingConfig, setPricingConfig] = useState<PricingConfig>(defaultPricingConfig);
   const [bankInfo, setBankInfo] = useState<BankInfo>({
     bankName: '',
     accountName: '',
@@ -79,7 +80,6 @@ export default function Abonnement() {
   });
   
   // Form state
-  const [selectedPlan, setSelectedPlan] = useState<string>('one_store');
   const [selectedDuration, setSelectedDuration] = useState<string>('1');
   const [screenshot, setScreenshot] = useState<string>('');
   const [screenshotName, setScreenshotName] = useState<string>('');
@@ -102,6 +102,7 @@ export default function Abonnement() {
     amount: request.amount,
     monthsRequested: request.months_requested,
     planKey: request.plan_key ?? undefined,
+    storesCount: request.stores_count ?? undefined,
     screenshot: request.screenshot,
     submittedAt: request.submitted_at,
     status: request.status,
@@ -164,6 +165,22 @@ export default function Abonnement() {
         // Keep defaults if request fails.
       });
 
+    apiFetch<{
+      monthly_price: number;
+      price_per_store: number;
+      currency: string;
+    }>('/api/pricing-config')
+      .then((config) => {
+        setPricingConfig({
+          monthlyPrice: Number(config.monthly_price),
+          pricePerStore: Number(config.price_per_store),
+          currency: config.currency || 'DH',
+        });
+      })
+      .catch(() => {
+        setPricingConfig(defaultPricingConfig);
+      });
+
     // Load user's stores and calculate active count
     apiFetch<{
       id: number | string;
@@ -197,36 +214,6 @@ export default function Abonnement() {
       })
       .catch(() => {
         setActiveStoreCount(1);
-      });
-
-    apiFetch<Array<{
-      key: string;
-      label: string;
-      store_limit?: number | null;
-      monthly_price?: number | null;
-      is_custom: boolean;
-      type_label: string;
-      currency: string;
-      sort_order: number;
-    }>>('/api/subscription-offers')
-      .then((offers) => {
-        const mappedOffers: SubscriptionOffer[] = offers.map((offer) => ({
-          key: offer.key,
-          label: offer.label,
-          storeLimit: offer.store_limit ?? null,
-          monthlyPrice: offer.monthly_price ?? null,
-          isCustom: offer.is_custom,
-          typeLabel: offer.type_label,
-          currency: offer.currency,
-          sortOrder: offer.sort_order,
-        }));
-        setSubscriptionOffers(mappedOffers);
-        if (!mappedOffers.find((offer) => offer.key === selectedPlan)) {
-          setSelectedPlan(mappedOffers[0]?.key || 'one_store');
-        }
-      })
-      .catch(() => {
-        setSubscriptionOffers(defaultSubscriptionOffers);
       });
   };
 
@@ -327,24 +314,24 @@ export default function Abonnement() {
   };
 
   const durationOptions = [
-    { months: 1, discount: 1, label: '1 mois' },
-    { months: 3, discount: 0.9, label: '3 mois (-10%)' },
-    { months: 6, discount: 0.85, label: '6 mois (-15%)' },
-    { months: 12, discount: 0.8, label: '12 mois (-20%)' },
+    { months: 1, label: '1 mois' },
+    { months: 6, label: '6 mois' },
+    { months: 12, label: '12 mois' },
   ];
 
-  const selectedOffer = subscriptionOffers.find((offer) => offer.key === selectedPlan);
   const selectedDurationValue = durationOptions.find(
     (option) => option.months.toString() === selectedDuration
   );
-  const selectedAmount = selectedOffer?.isCustom
-    ? 0
-    : Math.round(
-        (selectedOffer?.monthlyPrice ?? 0) * (selectedDurationValue?.months ?? 0) * (selectedDurationValue?.discount ?? 1)
-      );
+  const extraStoreCount = Math.max(0, activeStoreCount - 1);
+  const monthlyTotal =
+    (pricingConfig?.monthlyPrice ?? defaultPricingConfig.monthlyPrice) +
+    ((pricingConfig?.pricePerStore ?? defaultPricingConfig.pricePerStore) * extraStoreCount);
+  const selectedAmount = Math.round(
+    monthlyTotal * (selectedDurationValue?.months ?? 0)
+  );
 
   const handleSubmitPayment = async () => {
-    if (!user || !screenshot || !selectedOffer || !selectedDurationValue) {
+    if (!user || !screenshot || !selectedDurationValue) {
       toast({
         title: "Champs manquants",
         description: "Veuillez remplir tous les champs et joindre une capture d'écran",
@@ -360,8 +347,8 @@ export default function Abonnement() {
         method: 'POST',
         body: JSON.stringify({
           months_requested: selectedDurationValue.months,
-          plan_key: selectedOffer.key,
           amount: selectedAmount,
+          stores_count: activeStoreCount,
           screenshot,
         }),
       });
@@ -372,7 +359,6 @@ export default function Abonnement() {
       });
 
       // Reset form
-      setSelectedPlan('one_store');
       setSelectedDuration('1');
       setScreenshot('');
       setScreenshotName('');
@@ -487,14 +473,18 @@ export default function Abonnement() {
                   <div>
                     <p className="text-sm text-muted-foreground">Votre tarif mensuel</p>
                     <p className="text-2xl font-bold text-primary">
-                      {selectedOffer?.isCustom
-                        ? 'Sur devis'
-                        : `${selectedOffer?.monthlyPrice?.toLocaleString()} ${selectedOffer?.currency || 'DH'}/mois`}
+                      {monthlyTotal.toLocaleString()} {pricingConfig.currency}/mois
                     </p>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Inclut 1 magasin
+                      {extraStoreCount > 0 && (
+                        <> + {extraStoreCount} magasin(s) x {pricingConfig.pricePerStore.toLocaleString()} {pricingConfig.currency}/mois</>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">
-                      {selectedOffer?.label || 'Offre sélectionnée'}
+                      {activeStoreCount} magasin(s) actif(s)
                     </p>
                   </div>
                 </div>
@@ -646,19 +636,8 @@ export default function Abonnement() {
               <CardContent className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Formule d'abonnement</Label>
-                    <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {subscriptionOffers.map((offer) => (
-                          <SelectItem key={offer.key} value={offer.key}>
-                            {offer.label} {offer.isCustom ? '' : `- ${offer.monthlyPrice?.toLocaleString()} ${offer.currency}/mois`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Magasins actifs</Label>
+                    <Input readOnly value={`${activeStoreCount} magasin(s)`} />
                   </div>
                   <div className="space-y-2">
                     <Label>Durée</Label>
@@ -676,13 +655,11 @@ export default function Abonnement() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Montant à payer (DH)</Label>
+                    <Label>Montant à payer</Label>
                     <Input
                       type="text"
                       value={
-                        selectedOffer?.isCustom
-                          ? 'Sur devis'
-                          : `${selectedAmount.toLocaleString()} ${selectedOffer?.currency || 'DH'}`
+                        `${selectedAmount.toLocaleString()} ${pricingConfig.currency}`
                       }
                       readOnly
                     />
@@ -731,15 +708,10 @@ export default function Abonnement() {
                   className="w-full" 
                   size="lg"
                   onClick={handleSubmitPayment}
-                  disabled={isSubmitting || !screenshot || !selectedOffer}
+                  disabled={isSubmitting || !screenshot}
                 >
                   {isSubmitting ? "Envoi en cours..." : "Envoyer la preuve de paiement"}
                 </Button>
-                {selectedOffer?.isCustom && (
-                  <p className="text-xs text-muted-foreground">
-                    Offre sur devis: vous pouvez soumettre votre demande, nous vous contacterons pour finaliser le devis.
-                  </p>
-                )}
               </CardContent>
             </Card>
           </TabsContent>

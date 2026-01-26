@@ -81,29 +81,27 @@ export interface PricingConfig {
 }
 
 export const defaultPricingConfig: PricingConfig = {
-  monthlyPrice: 500, // 500 DH/month base
-  pricePerStore: 200, // 200 DH/store/month
+  monthlyPrice: 200, // 200 DH/month base
+  pricePerStore: 70, // 70 DH/store/month
   currency: 'DH',
 };
 
 // Calculate subscription plans dynamically based on pricing config
 export const getSubscriptionPlans = (storeCount: number = 1): SubscriptionPlan[] => {
   const monthlyTotal = defaultPricingConfig.monthlyPrice + (defaultPricingConfig.pricePerStore * storeCount);
-  
+
   return [
     { months: 1, price: monthlyTotal, label: '1 mois' },
-    { months: 3, price: Math.round(monthlyTotal * 3 * 0.9), label: '3 mois (-10%)' },
-    { months: 6, price: Math.round(monthlyTotal * 6 * 0.85), label: '6 mois (-15%)' },
-    { months: 12, price: Math.round(monthlyTotal * 12 * 0.8), label: '12 mois (-20%)' },
+    { months: 6, price: Math.round(monthlyTotal * 6), label: '6 mois' },
+    { months: 12, price: Math.round(monthlyTotal * 12), label: '12 mois' },
   ];
 };
 
 // Legacy plans (fallback)
 export const subscriptionPlans: SubscriptionPlan[] = [
-  { months: 1, price: 500, label: '1 mois' },
-  { months: 3, price: 1350, label: '3 mois (-10%)' },
-  { months: 6, price: 2550, label: '6 mois (-15%)' },
-  { months: 12, price: 4800, label: '12 mois (-20%)' },
+  { months: 1, price: 200, label: '1 mois' },
+  { months: 6, price: 960, label: '6 mois' },
+  { months: 12, price: 1680, label: '12 mois' },
 ];
 
 export interface BankInfo {

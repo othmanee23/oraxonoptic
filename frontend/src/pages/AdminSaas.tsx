@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { User, defaultPermissions } from "@/types/auth";
-import { Subscription, PaymentRequest, SubscriptionOffer, defaultSubscriptionOffers, BankInfo } from "@/types/subscription";
+import { Subscription, PaymentRequest, PricingConfig, defaultPricingConfig, BankInfo } from "@/types/subscription";
 import { Store } from "@/types/store";
 import { addMonths } from "date-fns";
 import { apiFetch } from "@/lib/api";
@@ -82,6 +82,7 @@ interface ApiPaymentRequest {
   amount: number;
   months_requested: number;
   plan_key?: string | null;
+  stores_count?: number | null;
   screenshot: string;
   submitted_at: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -135,6 +136,7 @@ const mapApiPayment = (payment: ApiPaymentRequest): PaymentRequest => ({
   amount: payment.amount,
   monthsRequested: payment.months_requested,
   planKey: payment.plan_key ?? undefined,
+  storesCount: payment.stores_count ?? undefined,
   screenshot: payment.screenshot,
   submittedAt: payment.submitted_at,
   status: payment.status,
@@ -154,7 +156,7 @@ export default function AdminSaas() {
 
   const [opticiens, setOpticiens] = useState<(User & { storeCount?: number; subscription?: Subscription })[]>([]);
   const [allStores, setAllStores] = useState<StoreWithOwner[]>([]);
-  const [subscriptionOffers, setSubscriptionOffers] = useState<SubscriptionOffer[]>(defaultSubscriptionOffers);
+  const [pricingConfig, setPricingConfig] = useState<PricingConfig>(defaultPricingConfig);
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [pendingUsers, setPendingUsers] = useState<(User & { storeCount?: number; subscription?: Subscription })[]>([]);
   const [stats, setStats] = useState<OpticiensStats>({
@@ -192,7 +194,7 @@ export default function AdminSaas() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
-  const [tempOffers, setTempOffers] = useState<SubscriptionOffer[]>(defaultSubscriptionOffers);
+  const [tempPricingConfig, setTempPricingConfig] = useState<PricingConfig>(defaultPricingConfig);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [selectedOpticienHistory, setSelectedOpticienHistory] = useState<(User & { storeCount?: number; subscription?: Subscription }) | null>(null);
   const [showAllPaymentsHistory, setShowAllPaymentsHistory] = useState(false);
@@ -272,31 +274,21 @@ export default function AdminSaas() {
       });
     
     try {
-      const offers = await apiFetch<Array<{
-        key: string;
-        label: string;
-        store_limit?: number | null;
-        monthly_price?: number | null;
-        is_custom: boolean;
-        type_label: string;
+      const config = await apiFetch<{
+        monthly_price: number;
+        price_per_store: number;
         currency: string;
-        sort_order: number;
-      }>>('/api/subscription-offers');
-        const mappedOffers: SubscriptionOffer[] = offers.map((offer) => ({
-          key: offer.key,
-          label: offer.label,
-          storeLimit: offer.store_limit ?? null,
-          monthlyPrice: offer.monthly_price ?? null,
-          isCustom: offer.is_custom,
-          typeLabel: offer.type_label,
-          currency: offer.currency,
-          sortOrder: offer.sort_order,
-        }));
-      setSubscriptionOffers(mappedOffers);
-      setTempOffers(mappedOffers);
+      }>('/api/pricing-config');
+      const mappedConfig: PricingConfig = {
+        monthlyPrice: Number(config.monthly_price),
+        pricePerStore: Number(config.price_per_store),
+        currency: config.currency || 'DH',
+      };
+      setPricingConfig(mappedConfig);
+      setTempPricingConfig(mappedConfig);
     } catch {
-      setSubscriptionOffers(defaultSubscriptionOffers);
-      setTempOffers(defaultSubscriptionOffers);
+      setPricingConfig(defaultPricingConfig);
+      setTempPricingConfig(defaultPricingConfig);
     }
 
     try {
@@ -415,34 +407,22 @@ export default function AdminSaas() {
   };
 
   const handleSavePricing = () => {
-    apiFetch('/api/subscription-offers', {
+    apiFetch('/api/pricing-config', {
       method: 'PUT',
       body: JSON.stringify({
-        offers: tempOffers.map((offer) => ({
-          key: offer.key,
-          label: offer.label,
-          store_limit: offer.storeLimit ?? null,
-          monthly_price: offer.monthlyPrice ?? null,
-          is_custom: offer.isCustom,
-          type_label: offer.typeLabel,
-          currency: offer.currency,
-          sort_order: offer.sortOrder,
-        })),
+        monthly_price: tempPricingConfig.monthlyPrice,
+        price_per_store: tempPricingConfig.pricePerStore,
+        currency: tempPricingConfig.currency,
       }),
     })
-      .then((offers) => {
-        setSubscriptionOffers(
-          (offers as any[]).map((offer) => ({
-            key: offer.key,
-            label: offer.label,
-            storeLimit: offer.store_limit ?? null,
-            monthlyPrice: offer.monthly_price ?? null,
-            isCustom: offer.is_custom,
-            typeLabel: offer.type_label,
-            currency: offer.currency,
-            sortOrder: offer.sort_order,
-          }))
-        );
+      .then((config) => {
+        const mappedConfig: PricingConfig = {
+          monthlyPrice: Number((config as any).monthly_price),
+          pricePerStore: Number((config as any).price_per_store),
+          currency: (config as any).currency || 'DH',
+        };
+        setPricingConfig(mappedConfig);
+        setTempPricingConfig(mappedConfig);
         setShowPricingDialog(false);
         toast({
           title: "Tarification mise à jour",
@@ -770,7 +750,7 @@ export default function AdminSaas() {
               Infos bancaires
             </Button>
             <Button variant="outline" onClick={() => {
-              setTempOffers(subscriptionOffers);
+              setTempPricingConfig(pricingConfig);
               setShowPricingDialog(true);
             }}>
               <Settings className="h-4 w-4 mr-2" />
@@ -787,19 +767,18 @@ export default function AdminSaas() {
         <Card className="bg-muted/50">
           <CardContent className="py-4">
             <div className="flex flex-wrap items-center justify-between gap-6">
-              {subscriptionOffers
-                .slice()
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((offer) => (
-                  <div key={offer.key}>
-                    <p className="text-sm text-muted-foreground">{offer.label}</p>
-                    <p className="text-xl font-bold">
-                      {offer.isCustom
-                        ? 'Sur devis'
-                        : `${offer.monthlyPrice?.toLocaleString()} ${offer.currency}/mois`}
-                    </p>
-                  </div>
-                ))}
+              <div>
+                <p className="text-sm text-muted-foreground">Base mensuelle (1 magasin)</p>
+                <p className="text-xl font-bold">
+                  {pricingConfig.monthlyPrice.toLocaleString()} {pricingConfig.currency}/mois
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Supplément par magasin</p>
+                <p className="text-xl font-bold">
+                  {pricingConfig.pricePerStore.toLocaleString()} {pricingConfig.currency}/mois
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1378,16 +1357,16 @@ export default function AdminSaas() {
             <DialogHeader>
               <DialogTitle>Configuration des tarifs</DialogTitle>
               <DialogDescription>
-                Personnalisez les 3 offres d'abonnement
+                Définissez le tarif mensuel de base et le supplément par magasin
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Devise</Label>
                 <Select
-                  value={tempOffers[0]?.currency || 'DH'}
+                  value={tempPricingConfig.currency}
                   onValueChange={(value) =>
-                    setTempOffers((prev) => prev.map((offer) => ({ ...offer, currency: value })))
+                    setTempPricingConfig((prev) => ({ ...prev, currency: value }))
                   }
                 >
                   <SelectTrigger>
@@ -1406,86 +1385,42 @@ export default function AdminSaas() {
                   </SelectContent>
                 </Select>
               </div>
-              {tempOffers
-                .slice()
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((offer) => (
-                  <div key={offer.key} className="space-y-2 rounded-lg border border-border p-4">
-                    <div className="flex items-center justify-between">
-                      <Label>{offer.label}</Label>
-                      <Badge variant={offer.isCustom ? 'secondary' : 'default'}>
-                        {offer.typeLabel}
-                      </Badge>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>Nom de l'offre</Label>
-                        <Input
-                          value={offer.label}
-                          onChange={(e) =>
-                            setTempOffers((prev) =>
-                              prev.map((item) =>
-                                item.key === offer.key ? { ...item, label: e.target.value } : item
-                              )
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Limite de magasins</Label>
-                        <Input
-                          type="number"
-                          value={offer.storeLimit ?? ''}
-                          onChange={(e) =>
-                            setTempOffers((prev) =>
-                              prev.map((item) =>
-                                item.key === offer.key
-                                  ? { ...item, storeLimit: parseInt(e.target.value) || null }
-                                  : item
-                              )
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Étiquette</Label>
-                        <Input
-                          value={offer.typeLabel}
-                          onChange={(e) =>
-                            setTempOffers((prev) =>
-                              prev.map((item) =>
-                                item.key === offer.key ? { ...item, typeLabel: e.target.value } : item
-                              )
-                            )
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Prix mensuel ({offer.currency})</Label>
-                      <Input
-                        type="number"
-                        value={offer.monthlyPrice ?? ''}
-                        onChange={(e) =>
-                          setTempOffers((prev) =>
-                            prev.map((item) =>
-                              item.key === offer.key
-                                ? { ...item, monthlyPrice: parseInt(e.target.value) || 0 }
-                                : item
-                            )
-                          )
-                        }
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-2 rounded-lg border border-border p-4">
+                <div className="space-y-2">
+                  <Label>Prix mensuel de base (1 magasin inclus)</Label>
+                  <Input
+                    type="number"
+                    value={tempPricingConfig.monthlyPrice}
+                    onChange={(e) =>
+                      setTempPricingConfig((prev) => ({
+                        ...prev,
+                        monthlyPrice: Number(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2 mt-4">
+                  <Label>Supplément par magasin et par mois</Label>
+                  <Input
+                    type="number"
+                    value={tempPricingConfig.pricePerStore}
+                    onChange={(e) =>
+                      setTempPricingConfig((prev) => ({
+                        ...prev,
+                        pricePerStore: Number(e.target.value) || 0,
+                      }))
+                    }
+                    placeholder="0"
+                  />
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button
                 variant="outline"
                 onClick={() => {
-                  setTempOffers(subscriptionOffers);
+                  setTempPricingConfig(pricingConfig);
                   setShowPricingDialog(false);
                 }}
               >

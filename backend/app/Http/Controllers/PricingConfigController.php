@@ -13,8 +13,8 @@ class PricingConfigController extends Controller
 
         if (! $config) {
             return response()->json([
-                'monthly_price' => 500,
-                'price_per_store' => 200,
+                'monthly_price' => 200,
+                'price_per_store' => 70,
                 'currency' => 'DH',
             ]);
         }
