@@ -299,15 +299,13 @@ export default function AdminSaas() {
       const info = await apiFetch<{
         bank_name: string;
         account_name: string;
-        iban: string;
-        swift: string;
         rib?: string | null;
       }>('/api/bank-info');
       const mappedInfo: BankInfo = {
         bankName: info.bank_name,
         accountName: info.account_name,
-        iban: info.iban,
-        swift: info.swift,
+        iban: '',
+        swift: '',
         rib: info.rib ?? '',
       };
       setBankInfo(mappedInfo);
@@ -452,8 +450,6 @@ export default function AdminSaas() {
       body: JSON.stringify({
         bank_name: tempBankInfo.bankName,
         account_name: tempBankInfo.accountName,
-        iban: tempBankInfo.iban,
-        swift: tempBankInfo.swift,
         rib: tempBankInfo.rib || null,
       }),
     })
@@ -1496,27 +1492,11 @@ export default function AdminSaas() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>RIB (optionnel)</Label>
+                <Label>RIB</Label>
                 <Input
                   value={tempBankInfo.rib || ''}
                   onChange={(e) => setTempBankInfo({ ...tempBankInfo, rib: e.target.value })}
                   placeholder="Ex: 000 000 0000000000000000 00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>IBAN</Label>
-                <Input
-                  value={tempBankInfo.iban}
-                  onChange={(e) => setTempBankInfo({ ...tempBankInfo, iban: e.target.value })}
-                  placeholder="Ex: MA00 0000 0000 0000 0000 0000 000"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>SWIFT / BIC</Label>
-                <Input
-                  value={tempBankInfo.swift}
-                  onChange={(e) => setTempBankInfo({ ...tempBankInfo, swift: e.target.value })}
-                  placeholder="Ex: BNMAMAMC"
                 />
               </div>
             </div>

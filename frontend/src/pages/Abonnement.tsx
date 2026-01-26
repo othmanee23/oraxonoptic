@@ -149,16 +149,14 @@ export default function Abonnement() {
     apiFetch<{
       bank_name: string;
       account_name: string;
-      iban: string;
-      swift: string;
       rib?: string | null;
     }>('/api/bank-info')
       .then((info) => {
         setBankInfo({
           bankName: info.bank_name,
           accountName: info.account_name,
-          iban: info.iban,
-          swift: info.swift,
+          iban: '',
+          swift: '',
           rib: info.rib ?? '',
         });
       })
@@ -602,32 +600,6 @@ export default function Abonnement() {
                       </Button>
                     </div>
                   )}
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div>
-                      <p className="text-xs text-muted-foreground">IBAN</p>
-                      <p className="font-mono text-sm">{bankInfo.iban}</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => copyToClipboard(bankInfo.iban)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div>
-                      <p className="text-xs text-muted-foreground">SWIFT/BIC</p>
-                      <p className="font-mono">{bankInfo.swift}</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => copyToClipboard(bankInfo.swift)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             </div>

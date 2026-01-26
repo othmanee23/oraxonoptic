@@ -15,8 +15,8 @@ class BankInfoController extends Controller
             return response()->json([
                 'bank_name' => 'Banque Nationale',
                 'account_name' => 'OpticAxon OPTIC SARL',
-                'iban' => 'MA00 0000 0000 0000 0000 0000 000',
-                'swift' => 'BNMAMAMC',
+                'iban' => '',
+                'swift' => '',
                 'rib' => '',
             ]);
         }
@@ -34,10 +34,12 @@ class BankInfoController extends Controller
         $validated = $request->validate([
             'bank_name' => ['required', 'string', 'max:255'],
             'account_name' => ['required', 'string', 'max:255'],
-            'iban' => ['required', 'string', 'max:255'],
-            'swift' => ['required', 'string', 'max:255'],
+            'iban' => ['nullable', 'string', 'max:255'],
+            'swift' => ['nullable', 'string', 'max:255'],
             'rib' => ['nullable', 'string', 'max:255'],
         ]);
+        $validated['iban'] = $validated['iban'] ?? '';
+        $validated['swift'] = $validated['swift'] ?? '';
 
         $bankInfo = BankInfo::query()->latest('id')->first();
         if ($bankInfo) {
