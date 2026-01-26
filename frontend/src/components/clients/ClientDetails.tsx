@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import { PrescriptionForm } from "./PrescriptionForm";
 import { usePermission } from "@/hooks/usePermission";
+import { useStore } from "@/contexts/StoreContext";
 
 interface ClientDetailsProps {
   client: Client;
@@ -87,6 +88,8 @@ export function ClientDetails({
   const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
   const [deletingPrescriptionId, setDeletingPrescriptionId] = useState<string | null>(null);
   const { canCreate, canEdit, canDelete } = usePermission();
+  const { storeSettings } = useStore();
+  const currency = storeSettings.currency || "DH";
 
   const totalSpent = purchases.reduce((sum, p) => sum + p.total, 0);
   const sortedPurchases = [...purchases].sort(
@@ -196,7 +199,7 @@ export function ClientDetails({
                 <span className="text-sm font-medium">Total achats</span>
               </div>
               <p className="text-2xl font-bold text-foreground">
-                {totalSpent.toLocaleString("fr-FR")} <span className="text-sm font-normal">MAD</span>
+                {totalSpent.toLocaleString("fr-FR")} <span className="text-sm font-normal">{currency}</span>
               </p>
             </div>
           </div>
@@ -387,7 +390,7 @@ export function ClientDetails({
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-lg">
-                        {purchase.total.toLocaleString("fr-FR")} MAD
+                        {purchase.total.toLocaleString("fr-FR")} {currency}
                       </p>
                       <Badge
                         variant={
@@ -428,10 +431,10 @@ export function ClientDetails({
                           </TableCell>
                           <TableCell className="text-center">{product.quantity}</TableCell>
                           <TableCell className="text-right">
-                            {product.unitPrice.toLocaleString("fr-FR")} MAD
+                            {product.unitPrice.toLocaleString("fr-FR")} {currency}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {product.total.toLocaleString("fr-FR")} MAD
+                            {product.total.toLocaleString("fr-FR")} {currency}
                           </TableCell>
                         </TableRow>
                       ))}

@@ -73,7 +73,7 @@ const Factures = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const { selectedStoreId, selectedStore } = useStore();
+  const { selectedStoreId, selectedStore, storeSettings } = useStore();
 
   const mapInvoiceResponse = (
     invoice: {
@@ -739,14 +739,15 @@ const Factures = () => {
         </div>
 
         {/* Invoice preview */}
-        <InvoicePreview
-          invoice={selectedInvoice}
-          client={selectedInvoice ? getClient(selectedInvoice.clientId) : null}
-          isOpen={isPreviewOpen}
-          onClose={() => setIsPreviewOpen(false)}
-          storeName={selectedStore?.name}
-          storeSubtitle={selectedStore?.city || selectedStore?.address}
-        />
+          <InvoicePreview
+            invoice={selectedInvoice}
+            client={selectedInvoice ? getClient(selectedInvoice.clientId) : null}
+            isOpen={isPreviewOpen}
+            onClose={() => setIsPreviewOpen(false)}
+            storeName={selectedStore?.name}
+            storeSubtitle={selectedStore?.city || selectedStore?.address}
+            storeCurrency={storeSettings.currency}
+          />
 
         {/* Payment dialog */}
         {selectedInvoice && (

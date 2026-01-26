@@ -35,6 +35,7 @@ import { ClientForm } from "@/components/clients/ClientForm";
 import { ClientDetails } from "@/components/clients/ClientDetails";
 import { useToast } from "@/hooks/use-toast";
 import { usePermission } from "@/hooks/usePermission";
+import { useStore } from "@/contexts/StoreContext";
 import { apiFetch } from "@/lib/api";
 
 
@@ -51,6 +52,8 @@ export default function Clients() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { canCreate, canEdit, canDelete } = usePermission();
+  const { storeSettings } = useStore();
+  const currency = storeSettings.currency || "DH";
 
   const resolvePurchaseStatus = (amountPaid: number, amountDue: number) => {
     if (amountDue <= 0) return "paid";
@@ -963,7 +966,7 @@ export default function Clients() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className="font-medium">{totalSpent.toLocaleString("fr-FR")} MAD</span>
+                          <span className="font-medium">{totalSpent.toLocaleString("fr-FR")} {currency}</span>
                           <p className="text-sm text-muted-foreground">
                             {purchasesCount} achat{purchasesCount > 1 ? "s" : ""}
                           </p>

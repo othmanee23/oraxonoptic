@@ -23,6 +23,7 @@ interface InvoicePreviewProps {
   onValidate?: () => void;
   storeName?: string;
   storeSubtitle?: string;
+  storeCurrency?: string;
 }
 
 const statusConfig: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -41,12 +42,14 @@ export function InvoicePreview({
   onValidate,
   storeName,
   storeSubtitle,
+  storeCurrency,
 }: InvoicePreviewProps) {
   const printRef = useRef<HTMLDivElement>(null);
 
   if (!invoice) return null;
   const companyName = storeName?.trim() ? storeName : "OpticAxon";
   const companySub = storeSubtitle?.trim() ? storeSubtitle : "optic";
+  const currencyLabel = storeCurrency?.trim() ? storeCurrency : "DH";
 
   const handlePrint = () => {
     // Create iframe for printing to avoid popup blockers
@@ -158,9 +161,9 @@ export function InvoicePreview({
                     <div class="product-ref">${item.productReference}</div>
                   </td>
                   <td class="text-center">${item.quantity}</td>
-                  <td class="text-right">${item.unitPrice.toLocaleString('fr-MA')} DH</td>
+                  <td class="text-right">${item.unitPrice.toLocaleString('fr-MA')} ${currencyLabel}</td>
                   <td class="text-right">${item.discount > 0 ? item.discount + '%' : '-'}</td>
-                  <td class="text-right" style="font-weight: 500;">${item.total.toLocaleString('fr-MA')} DH</td>
+                  <td class="text-right" style="font-weight: 500;">${item.total.toLocaleString('fr-MA')} ${currencyLabel}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -170,32 +173,32 @@ export function InvoicePreview({
             <div class="totals-box">
               <div class="total-row">
                 <span>Sous-total</span>
-                <span>${invoice.subtotal.toLocaleString('fr-MA')} DH</span>
+                <span>${invoice.subtotal.toLocaleString('fr-MA')} ${currencyLabel}</span>
               </div>
               ${invoice.discountTotal > 0 ? `
                 <div class="total-row text-green">
                   <span>Remises</span>
-                  <span>-${invoice.discountTotal.toLocaleString('fr-MA')} DH</span>
+                  <span>-${invoice.discountTotal.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
               ` : ''}
               ${invoice.taxRate > 0 ? `
                 <div class="total-row">
                   <span>TVA (${invoice.taxRate}%)</span>
-                  <span>${invoice.taxAmount.toLocaleString('fr-MA')} DH</span>
+                  <span>${invoice.taxAmount.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
               ` : ''}
               <div class="total-row main">
                 <span>Total</span>
-                <span class="amount">${invoice.total.toLocaleString('fr-MA')} DH</span>
+                <span class="amount">${invoice.total.toLocaleString('fr-MA')} ${currencyLabel}</span>
               </div>
               ${invoice.amountPaid > 0 ? `
                 <div class="total-row text-green">
                   <span>Payé</span>
-                  <span>${invoice.amountPaid.toLocaleString('fr-MA')} DH</span>
+                  <span>${invoice.amountPaid.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
                 <div class="total-row" style="font-weight: 600;">
                   <span>Reste à payer</span>
-                  <span>${invoice.amountDue.toLocaleString('fr-MA')} DH</span>
+                  <span>${invoice.amountDue.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
               ` : ''}
             </div>
@@ -210,7 +213,7 @@ export function InvoicePreview({
                     <span>✓ ${format(new Date(payment.date), 'dd/MM/yyyy HH:mm')}</span>
                     <span class="payment-method">${getPaymentMethodLabel(payment.method)}</span>
                   </div>
-                  <span style="font-weight: 500;">${payment.amount.toLocaleString('fr-MA')} DH</span>
+                  <span style="font-weight: 500;">${payment.amount.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
               `).join('')}
             </div>
@@ -345,9 +348,9 @@ export function InvoicePreview({
                     <div class="product-ref">${item.productReference}</div>
                   </td>
                   <td class="text-center">${item.quantity}</td>
-                  <td class="text-right">${item.unitPrice.toLocaleString('fr-MA')} DH</td>
+                  <td class="text-right">${item.unitPrice.toLocaleString('fr-MA')} ${currencyLabel}</td>
                   <td class="text-right">${item.discount > 0 ? item.discount + '%' : '-'}</td>
-                  <td class="text-right" style="font-weight: 500;">${item.total.toLocaleString('fr-MA')} DH</td>
+                  <td class="text-right" style="font-weight: 500;">${item.total.toLocaleString('fr-MA')} ${currencyLabel}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -357,32 +360,32 @@ export function InvoicePreview({
             <div class="totals-box">
               <div class="total-row">
                 <span>Sous-total</span>
-                <span>${invoice.subtotal.toLocaleString('fr-MA')} DH</span>
+                <span>${invoice.subtotal.toLocaleString('fr-MA')} ${currencyLabel}</span>
               </div>
               ${invoice.discountTotal > 0 ? `
                 <div class="total-row text-green">
                   <span>Remises</span>
-                  <span>-${invoice.discountTotal.toLocaleString('fr-MA')} DH</span>
+                  <span>-${invoice.discountTotal.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
               ` : ''}
               ${invoice.taxRate > 0 ? `
                 <div class="total-row">
                   <span>TVA (${invoice.taxRate}%)</span>
-                  <span>${invoice.taxAmount.toLocaleString('fr-MA')} DH</span>
+                  <span>${invoice.taxAmount.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
               ` : ''}
               <div class="total-row main">
                 <span>Total</span>
-                <span class="amount">${invoice.total.toLocaleString('fr-MA')} DH</span>
+                <span class="amount">${invoice.total.toLocaleString('fr-MA')} ${currencyLabel}</span>
               </div>
               ${invoice.amountPaid > 0 ? `
                 <div class="total-row text-green">
                   <span>Payé</span>
-                  <span>${invoice.amountPaid.toLocaleString('fr-MA')} DH</span>
+                  <span>${invoice.amountPaid.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
                 <div class="total-row" style="font-weight: 600;">
                   <span>Reste à payer</span>
-                  <span>${invoice.amountDue.toLocaleString('fr-MA')} DH</span>
+                  <span>${invoice.amountDue.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
               ` : ''}
             </div>
@@ -397,7 +400,7 @@ export function InvoicePreview({
                     <span>✓ ${format(new Date(payment.date), 'dd/MM/yyyy HH:mm')}</span>
                     <span class="payment-method">${getPaymentMethodLabel(payment.method)}</span>
                   </div>
-                  <span style="font-weight: 500;">${payment.amount.toLocaleString('fr-MA')} DH</span>
+                  <span style="font-weight: 500;">${payment.amount.toLocaleString('fr-MA')} ${currencyLabel}</span>
                 </div>
               `).join('')}
             </div>
@@ -494,11 +497,11 @@ export function InvoicePreview({
                       <p className="text-xs text-muted-foreground">{item.productReference}</p>
                     </td>
                     <td className="text-center p-3">{item.quantity}</td>
-                    <td className="text-right p-3">{item.unitPrice.toLocaleString('fr-MA')} DH</td>
+                    <td className="text-right p-3">{item.unitPrice.toLocaleString('fr-MA')} {currencyLabel}</td>
                     <td className="text-right p-3">
                       {item.discount > 0 ? `${item.discount}%` : '-'}
                     </td>
-                    <td className="text-right p-3 font-medium">{item.total.toLocaleString('fr-MA')} DH</td>
+                    <td className="text-right p-3 font-medium">{item.total.toLocaleString('fr-MA')} {currencyLabel}</td>
                   </tr>
                 ))}
               </tbody>
@@ -510,34 +513,34 @@ export function InvoicePreview({
             <div className="w-64 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Sous-total</span>
-                <span>{invoice.subtotal.toLocaleString('fr-MA')} DH</span>
+                <span>{invoice.subtotal.toLocaleString('fr-MA')} {currencyLabel}</span>
               </div>
               {invoice.discountTotal > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Remises</span>
-                  <span>-{invoice.discountTotal.toLocaleString('fr-MA')} DH</span>
+                  <span>-{invoice.discountTotal.toLocaleString('fr-MA')} {currencyLabel}</span>
                 </div>
               )}
               {invoice.taxRate > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">TVA ({invoice.taxRate}%)</span>
-                  <span>{invoice.taxAmount.toLocaleString('fr-MA')} DH</span>
+                  <span>{invoice.taxAmount.toLocaleString('fr-MA')} {currencyLabel}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
-                <span className="text-primary">{invoice.total.toLocaleString('fr-MA')} DH</span>
+                <span className="text-primary">{invoice.total.toLocaleString('fr-MA')} {currencyLabel}</span>
               </div>
               {invoice.amountPaid > 0 && (
                 <>
                   <div className="flex justify-between text-green-600">
                     <span>Payé</span>
-                    <span>{invoice.amountPaid.toLocaleString('fr-MA')} DH</span>
+                    <span>{invoice.amountPaid.toLocaleString('fr-MA')} {currencyLabel}</span>
                   </div>
                   <div className="flex justify-between font-semibold">
                     <span>Reste à payer</span>
-                    <span>{invoice.amountDue.toLocaleString('fr-MA')} DH</span>
+                    <span>{invoice.amountDue.toLocaleString('fr-MA')} {currencyLabel}</span>
                   </div>
                 </>
               )}
@@ -560,7 +563,7 @@ export function InvoicePreview({
                          payment.method === 'transfer' ? 'Virement' : 'Mixte'}
                       </Badge>
                     </div>
-                    <span className="font-medium">{payment.amount.toLocaleString('fr-MA')} DH</span>
+                    <span className="font-medium">{payment.amount.toLocaleString('fr-MA')} {currencyLabel}</span>
                   </div>
                 ))}
               </div>

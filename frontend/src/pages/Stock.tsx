@@ -91,7 +91,8 @@ export default function Stock() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  const { stores, selectedStoreId } = useStore();
+  const { stores, selectedStoreId, storeSettings } = useStore();
+  const currency = storeSettings.currency || "DH";
   const [isLoading, setIsLoading] = useState(true);
 
   const activeStoreId = selectedStoreId || stores[0]?.id || "";
@@ -1027,7 +1028,7 @@ export default function Stock() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalValue.toLocaleString('fr-MA')} MAD</div>
+              <div className="text-2xl font-bold">{stats.totalValue.toLocaleString('fr-MA')} {currency}</div>
               <p className="text-xs text-muted-foreground">Prix de vente</p>
             </CardContent>
           </Card>
@@ -1120,7 +1121,7 @@ export default function Stock() {
                         <Badge variant="outline">{getCategoryLabel(product.category)}</Badge>
                       </TableCell>
                       <TableCell>{product.brand}</TableCell>
-                      <TableCell className="text-right">{product.sellingPrice.toLocaleString('fr-MA')} MAD</TableCell>
+                      <TableCell className="text-right">{product.sellingPrice.toLocaleString('fr-MA')} {currency}</TableCell>
                       <TableCell className="text-center">
                         <Badge 
                           variant={product.currentStock <= product.minimumStock ? "destructive" : "secondary"}
@@ -1392,11 +1393,11 @@ export default function Stock() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Prix d'achat</p>
-                  <p className="font-medium">{selectedProduct.purchasePrice.toLocaleString('fr-MA')} MAD</p>
+                  <p className="font-medium">{selectedProduct.purchasePrice.toLocaleString('fr-MA')} {currency}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Prix de vente</p>
-                  <p className="font-medium">{selectedProduct.sellingPrice.toLocaleString('fr-MA')} MAD</p>
+                  <p className="font-medium">{selectedProduct.sellingPrice.toLocaleString('fr-MA')} {currency}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

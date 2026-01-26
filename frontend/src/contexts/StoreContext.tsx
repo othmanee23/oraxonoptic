@@ -1,5 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Store } from "@/types/store";
+import {
+  StoreSettings,
+  defaultStoreSettings,
+  setStoreSettingsCache,
+} from "@/types/settings";
 import { apiFetch, setActiveStoreId } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -22,12 +27,41 @@ interface StoreContextValue {
   storeCount: number;
   selectedStoreId: string;
   selectedStore?: Store;
+  storeSettings: StoreSettings;
   isLoading: boolean;
   setSelectedStoreId: (storeId: string) => void;
   refreshStores: () => Promise<void>;
+  refreshStoreSettings: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextValue | undefined>(undefined);
+
+type StoreSettingsApiResponse = {
+  name: string;
+  subtitle?: string | null;
+  logo?: string | null;
+  address?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  ice?: string | null;
+  rc?: string | null;
+  patente?: string | null;
+  cnss?: string | null;
+  rib?: string | null;
+  footer_text?: string | null;
+  primary_color?: string | null;
+  currency?: string | null;
+  notify_low_stock_in_app?: boolean | null;
+  notify_low_stock_email?: boolean | null;
+  notify_workshop_ready_in_app?: boolean | null;
+  notify_workshop_ready_email?: boolean | null;
+  notify_new_client_in_app?: boolean | null;
+  notify_new_client_email?: boolean | null;
+  notify_invoice_created_in_app?: boolean | null;
+  notify_invoice_created_email?: boolean | null;
+};
 
 const mapStore = (store: StoreApiResponse): Store => ({
   id: String(store.id),
@@ -43,12 +77,58 @@ const mapStore = (store: StoreApiResponse): Store => ({
   updatedAt: store.updated_at,
 });
 
+const mapStoreSettings = (data: StoreSettingsApiResponse): StoreSettings => ({
+  name: data.name,
+  subtitle: data.subtitle ?? undefined,
+  logo: data.logo ?? undefined,
+  address: data.address ?? undefined,
+  city: data.city ?? undefined,
+  phone: data.phone ?? undefined,
+  email: data.email ?? undefined,
+  website: data.website ?? undefined,
+  ice: data.ice ?? undefined,
+  rc: data.rc ?? undefined,
+  patente: data.patente ?? undefined,
+  cnss: data.cnss ?? undefined,
+  rib: data.rib ?? undefined,
+  footerText: data.footer_text ?? undefined,
+  primaryColor: data.primary_color ?? defaultStoreSettings.primaryColor,
+  currency: data.currency ?? defaultStoreSettings.currency,
+  notifyLowStockInApp: data.notify_low_stock_in_app ?? defaultStoreSettings.notifyLowStockInApp,
+  notifyLowStockEmail: data.notify_low_stock_email ?? defaultStoreSettings.notifyLowStockEmail,
+  notifyWorkshopReadyInApp: data.notify_workshop_ready_in_app ?? defaultStoreSettings.notifyWorkshopReadyInApp,
+  notifyWorkshopReadyEmail: data.notify_workshop_ready_email ?? defaultStoreSettings.notifyWorkshopReadyEmail,
+  notifyNewClientInApp: data.notify_new_client_in_app ?? defaultStoreSettings.notifyNewClientInApp,
+  notifyNewClientEmail: data.notify_new_client_email ?? defaultStoreSettings.notifyNewClientEmail,
+  notifyInvoiceCreatedInApp: data.notify_invoice_created_in_app ?? defaultStoreSettings.notifyInvoiceCreatedInApp,
+  notifyInvoiceCreatedEmail: data.notify_invoice_created_email ?? defaultStoreSettings.notifyInvoiceCreatedEmail,
+});
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const { user, updateUser } = useAuth();
   const [stores, setStores] = useState<Store[]>([]);
   const [storeCount, setStoreCount] = useState(0);
   const [selectedStoreId, setSelectedStoreIdState] = useState("");
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(defaultStoreSettings);
   const [isLoading, setIsLoading] = useState(false);
+
+  const refreshStoreSettings = useCallback(async () => {
+    if (!selectedStoreId || !user || user.role === "super_admin") {
+      setStoreSettings(defaultStoreSettings);
+      setStoreSettingsCache(defaultStoreSettings);
+      return;
+    }
+
+    try {
+      const data = await apiFetch<StoreSettingsApiResponse>("/api/store-settings");
+      const mapped = mapStoreSettings(data);
+      setStoreSettings(mapped);
+      setStoreSettingsCache(mapped);
+    } catch {
+      setStoreSettings(defaultStoreSettings);
+      setStoreSettingsCache(defaultStoreSettings);
+    }
+  }, [selectedStoreId, user]);
 
   const setSelectedStoreId = useCallback((storeId: string) => {
     setSelectedStoreIdState(storeId);
@@ -73,7 +153,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         updateUser(updatedUser);
       })
       .catch(() => undefined);
-  }, [user, updateUser]);
+    refreshStoreSettings();
+  }, [user, updateUser, refreshStoreSettings]);
 
   const refreshStores = useCallback(async () => {
     if (!user || user.role === "super_admin") {
@@ -81,6 +162,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setStoreCount(0);
       setSelectedStoreIdState("");
       setActiveStoreId("");
+      setStoreSettings(defaultStoreSettings);
+      setStoreSettingsCache(defaultStoreSettings);
       return;
     }
 
@@ -99,6 +182,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (preferredStoreId && activeStores.some((store) => store.id === preferredStoreId)) {
         setSelectedStoreIdState(preferredStoreId);
         setActiveStoreId(preferredStoreId);
+        refreshStoreSettings();
       } else if (activeStores.length > 0) {
         setSelectedStoreIdState(activeStores[0].id);
         setActiveStoreId(activeStores[0].id);
@@ -116,19 +200,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             });
           })
           .catch(() => undefined);
+        refreshStoreSettings();
       } else {
         setSelectedStoreIdState("");
         setActiveStoreId("");
+        setStoreSettings(defaultStoreSettings);
+        setStoreSettingsCache(defaultStoreSettings);
       }
     } catch {
       setStores([]);
       setStoreCount(0);
       setSelectedStoreIdState("");
       setActiveStoreId("");
+      setStoreSettings(defaultStoreSettings);
+      setStoreSettingsCache(defaultStoreSettings);
     } finally {
       setIsLoading(false);
     }
-  }, [user, updateUser]);
+  }, [user, updateUser, refreshStoreSettings]);
 
   useEffect(() => {
     refreshStores();
@@ -146,9 +235,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         storeCount,
         selectedStoreId,
         selectedStore,
+        storeSettings,
         isLoading,
         setSelectedStoreId,
         refreshStores,
+        refreshStoreSettings,
       }}
     >
       {children}
