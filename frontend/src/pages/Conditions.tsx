@@ -11,9 +11,9 @@ export default function Conditions() {
           <div className="flex items-center justify-between h-16">
             <Link to="/landing" className="flex items-center gap-3">
               <img
-                src="/logo-03.png"
+                src="/logo-01.png"
                 alt="OrAxonOptic"
-                className="h-[104px] w-[104px] rounded-xl"
+                className="h-[88px] w-[88px] rounded-xl"
               />
             </Link>
             <Link to="/landing">

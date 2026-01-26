@@ -88,9 +88,9 @@ export default function Landing() {
           <div className="flex items-center justify-between h-16">
             <Link to="/landing" className="flex items-center gap-3">
               <img
-                src="/logo-03.png"
+                src="/logo-01.png"
                 alt="OrAxonOptic"
-                className="h-[120px] w-[120px] rounded-xl"
+                className="h-[96px] w-[96px] rounded-xl"
               />
             </Link>
             <div className="flex items-center gap-3">
