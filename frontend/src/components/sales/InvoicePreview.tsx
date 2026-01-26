@@ -21,6 +21,8 @@ interface InvoicePreviewProps {
   isOpen: boolean;
   onClose: () => void;
   onValidate?: () => void;
+  storeName?: string;
+  storeSubtitle?: string;
 }
 
 const statusConfig: Record<PaymentStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -37,10 +39,14 @@ export function InvoicePreview({
   isOpen,
   onClose,
   onValidate,
+  storeName,
+  storeSubtitle,
 }: InvoicePreviewProps) {
   const printRef = useRef<HTMLDivElement>(null);
 
   if (!invoice) return null;
+  const companyName = storeName?.trim() ? storeName : "OpticAxon";
+  const companySub = storeSubtitle?.trim() ? storeSubtitle : "optic";
 
   const handlePrint = () => {
     // Create iframe for printing to avoid popup blockers
@@ -113,8 +119,8 @@ export function InvoicePreview({
         <body>
           <div class="invoice-header">
             <div>
-              <div class="company-name">OpticAxon</div>
-              <div class="company-sub">optic</div>
+              <div class="company-name">${companyName}</div>
+              <div class="company-sub">${companySub}</div>
             </div>
             <div style="text-align: right;">
               <div class="invoice-number">${invoice.invoiceNumber}</div>
@@ -219,7 +225,7 @@ export function InvoicePreview({
 
           <div class="footer">
             <p>Merci pour votre confiance</p>
-            <p>OpticAxon - Votre spécialiste en optique</p>
+            <p>${companyName} - Votre spécialiste en optique</p>
           </div>
         </body>
       </html>
@@ -300,8 +306,8 @@ export function InvoicePreview({
         <body>
           <div class="invoice-header">
             <div>
-              <div class="company-name">OpticAxon</div>
-              <div class="company-sub">optic</div>
+              <div class="company-name">${companyName}</div>
+              <div class="company-sub">${companySub}</div>
             </div>
             <div style="text-align: right;">
               <div class="invoice-number">${invoice.invoiceNumber}</div>
@@ -406,7 +412,7 @@ export function InvoicePreview({
 
           <div class="footer">
             <p>Merci pour votre confiance</p>
-            <p>OpticAxon - Votre spécialiste en optique</p>
+            <p>${companyName} - Votre spécialiste en optique</p>
           </div>
         </body>
       </html>
@@ -444,8 +450,8 @@ export function InvoicePreview({
           {/* Header */}
           <div className="flex justify-between">
             <div>
-              <h2 className="text-xl font-bold text-primary">OpticAxon</h2>
-              <p className="text-sm text-muted-foreground">optic</p>
+              <h2 className="text-xl font-bold text-primary">{companyName}</h2>
+              <p className="text-sm text-muted-foreground">{companySub}</p>
             </div>
             <div className="text-right">
               <p className="font-semibold">{invoice.invoiceNumber}</p>

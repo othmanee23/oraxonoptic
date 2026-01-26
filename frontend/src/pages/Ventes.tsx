@@ -49,7 +49,7 @@ import { useStore } from "@/contexts/StoreContext";
 const Ventes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { selectedStoreId } = useStore();
+  const { selectedStoreId, selectedStore } = useStore();
   
   // Data states
   const [products, setProducts] = useState<Product[]>([]);
@@ -880,6 +880,8 @@ const Ventes = () => {
             }
           }}
           onValidate={currentInvoice?.status === 'draft' ? handleValidateInvoice : undefined}
+          storeName={selectedStore?.name}
+          storeSubtitle={selectedStore?.city || selectedStore?.address}
         />
 
         {/* Custom lens form */}
