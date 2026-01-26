@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\Store;
 use App\Models\User;
 use App\Services\NotificationService;
@@ -40,25 +41,50 @@ class ClientController extends Controller
 
         $clients = Client::query()
             ->where('owner_id', $ownerId)
-            ->with([
-                'latestInvoice' => function ($query) {
-                    $query->select(
-                        'invoices.id',
-                        'invoices.client_id',
-                        'invoices.total',
-                        'invoices.amount_paid',
-                        'invoices.amount_due',
-                        'invoices.status',
-                        'invoices.created_at',
-                        'invoices.paid_at',
-                        'invoices.validated_at'
-                    );
-                },
-            ])
-            ->withCount('invoices')
-            ->withSum('invoices', 'total')
             ->orderByDesc('created_at')
             ->get();
+
+        if ($clients->isNotEmpty()) {
+            $clientIds = $clients->pluck('id')->all();
+
+            $stats = Invoice::query()
+                ->selectRaw('client_id, COUNT(*) as invoices_count, COALESCE(SUM(total), 0) as invoices_sum_total')
+                ->whereIn('client_id', $clientIds)
+                ->groupBy('client_id')
+                ->get()
+                ->keyBy('client_id');
+
+            $latestInvoiceIds = Invoice::query()
+                ->selectRaw('client_id, MAX(id) as id')
+                ->whereIn('client_id', $clientIds)
+                ->groupBy('client_id')
+                ->pluck('id', 'client_id');
+
+            $latestInvoices = Invoice::query()
+                ->whereIn('id', $latestInvoiceIds->values()->all())
+                ->get()
+                ->keyBy('id');
+
+            foreach ($clients as $client) {
+                $stat = $stats->get($client->id);
+                $client->setAttribute('invoices_count', (int) ($stat->invoices_count ?? 0));
+                $client->setAttribute('invoices_sum_total', $stat->invoices_sum_total ?? 0);
+
+                $latestId = $latestInvoiceIds->get($client->id);
+                $latest = $latestId ? $latestInvoices->get($latestId) : null;
+                $client->setAttribute('latest_invoice', $latest ? [
+                    'id' => $latest->id,
+                    'client_id' => $latest->client_id,
+                    'total' => $latest->total,
+                    'amount_paid' => $latest->amount_paid,
+                    'amount_due' => $latest->amount_due,
+                    'status' => $latest->status,
+                    'created_at' => $latest->created_at?->toISOString(),
+                    'paid_at' => $latest->paid_at?->toISOString(),
+                    'validated_at' => $latest->validated_at?->toISOString(),
+                ] : null);
+            }
+        }
 
         return response()->json($clients);
     }
